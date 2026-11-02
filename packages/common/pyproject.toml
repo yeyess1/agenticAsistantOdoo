@@ -1,0 +1,22 @@
+[project]
+name = "odoo-rag-common"
+version = "0.1.0"
+description = "Shared settings, schemas and interfaces (Embedder, Retriever, Reranker, SearchProvider, LLM)"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "httpx>=0.27",
+    "qdrant-client>=1.12",
+    "psycopg[binary]>=3.2",
+    "langchain-core>=0.3",
+    "langchain-anthropic>=0.3",
+    "ddgs>=9.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/common"]

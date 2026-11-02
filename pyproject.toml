@@ -1,0 +1,72 @@
+[project]
+name = "odoo-rag-workspace"
+version = "0.1.0"
+description = "Agentic RAG over Odoo 19 developer docs (workspace root)"
+requires-python = ">=3.12,<3.13"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "ruff>=0.9",
+    "mypy>=1.14",
+    "pytest>=8.3",
+    "pytest-asyncio>=0.25",
+    "respx>=0.22",
+    "pre-commit>=4.0",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = [
+    "packages/common",
+    "services/agent",
+    "services/ingestion",
+    "infra/init",
+    "eval",
+]
+
+[tool.uv.sources]
+odoo-rag-common = { workspace = true }
+odoo-rag-agent = { workspace = true }
+odoo-rag-ingestion = { workspace = true }
+odoo-rag-init = { workspace = true }
+odoo-rag-eval = { workspace = true }
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = [".claude", "frontend", "*.md"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "C4", "ASYNC", "RUF"]
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+warn_unused_ignores = true
+warn_redundant_casts = true
+no_implicit_optional = true
+check_untyped_defs = true
+explicit_package_bases = true
+mypy_path = [
+    "packages/common/src",
+    "services/agent/src",
+    "services/ingestion/src",
+    "infra/init",
+]
+
+[[tool.mypy.overrides]]
+module = "common.*"
+strict = true
+
+[[tool.mypy.overrides]]
+module = ["ddgs", "ddgs.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["packages/common/tests", "infra/init/tests"]
+addopts = "-ra"

@@ -1,0 +1,17 @@
+[project]
+name = "odoo-rag-agent"
+version = "0.1.0"
+description = "Agent service (FastAPI + LangGraph). Skeleton: implemented in Phase 2/3."
+requires-python = ">=3.12"
+dependencies = [
+    "odoo-rag-common",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agent"]
