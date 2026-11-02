@@ -1,0 +1,88 @@
+# Odoo 19 agentic RAG - Docker Compose (D-10).
+# Phase 0 services: postgres, qdrant, embeddings (TEI), init. The app services
+# (agent, ingestion, frontend, eval) are added by later phases.
+# Secrets live in .env (never here). `${VAR:-x}` defaults are dev-only.
+name: odoo-rag
+
+services:
+  postgres:
+    image: postgres:17.10-alpine
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-odoo_rag} # dev-only default
+      POSTGRES_DB: ${POSTGRES_DB:-odoo_rag} # dev-only default
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  qdrant:
+    image: qdrant/qdrant:v1.20.0
+    restart: unless-stopped
+    volumes:
+      - qdrant-data:/qdrant/storage
+    healthcheck:
+      # The image may not ship curl/wget (V-e): plain HTTP GET over bash /dev/tcp.
+      test:
+        - CMD
+        - bash
+        - -c
+        - |
+          exec 3<>/dev/tcp/127.0.0.1/6333 && printf 'GET /readyz HTTP/1.0\r\n\r\n' >&3 && read -r line <&3 && [[ "$$line" == *" 200"* ]]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  embeddings:
+    # CPU image by default (RK-01); the GPU variant lives in compose.gpu.yaml.
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.8.3
+    restart: unless-stopped
+    command:
+      - --model-id
+      - ${EMBEDDINGS_MODEL:-Qwen/Qwen3-Embedding-0.6B}
+      - --port
+      - "80"
+    environment:
+      # Passed through only if set in .env (an empty token must not reach TEI).
+      - HF_TOKEN
+    volumes:
+      - hf-cache:/data
+    healthcheck:
+      test:
+        - CMD
+        - bash
+        - -c
+        - |
+          exec 3<>/dev/tcp/127.0.0.1/80 && printf 'GET /health HTTP/1.0\r\n\r\n' >&3 && read -r line <&3 && [[ "$$line" == *" 200"* ]]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 300s # first start downloads the model
+
+  init:
+    # One-shot: Postgres tables + checkpointer + Qdrant collection and payload indexes (C-04).
+    build:
+      context: ./infra/init
+      additional_contexts:
+        common: ./packages/common
+        workspace: .
+    env_file: .env
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+
+volumes:
+  pg-data:
+  qdrant-data:
+  hf-cache:
+  documents-data:

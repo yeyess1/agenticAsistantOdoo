@@ -1,0 +1,7 @@
+# Dev override, loaded automatically by `docker compose`.
+# Qdrant dashboard/API on loopback only. `develop.watch` for agent/ingestion/frontend
+# is added together with those services (Phase 3, C-06).
+services:
+  qdrant:
+    ports:
+      - "127.0.0.1:6333:6333"

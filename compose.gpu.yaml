@@ -1,0 +1,12 @@
+# GPU override for TEI (`make up-gpu`). Requires the NVIDIA Container Toolkit.
+# Image tag `89-*` targets Ada Lovelace (RTX 40xx).
+services:
+  embeddings:
+    image: ghcr.io/huggingface/text-embeddings-inference:89-1.8.3
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
