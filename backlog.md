@@ -58,13 +58,13 @@ Asistente agéntico de conocimiento para desarrolladores (RAG orquestado como gr
 
 | ID | Tipo | Tarea | Estado | Prioridad | Decisión / Contexto |
 |---|---|---|---|---|---|
-| F-01 | OBL | Crear repo Git, estructura de carpetas (`services/ingestion`, `services/agent`, `frontend`, `eval`, `docs`) | ⬜ Por hacer | P0 | |
-| F-02 | OBL | `.gitignore`, `.env.example` documentado, política de secretos | ⬜ Por hacer | P0 | |
-| F-03 | OBL | Configuración de linting/formato/tipado y base de tests | ⬜ Por hacer | P2 | D-14: Ruff, mypy, pytest, pre-commit |
-| F-04 | OBL | uv workspace (`pyproject.toml` raíz + miembros) + `uv.lock` | ⬜ Por hacer | P0 | D-14 |
-| F-05 | OBL | gitleaks en pre-commit y CI | ⬜ Por hacer | P0 | D-14; regla de no-secretos |
-| F-06 | OBL | Makefile (`up`, `up-gpu`, `seed`, `eval`, `test`, `lint`, `down`) | ⬜ Por hacer | P1 | D-14 |
-| F-07 | OBL | GitHub Actions: lint, mypy, tests, gitleaks | ⬜ Por hacer | P2 | D-14 |
+| F-01 | OBL | Crear repo Git, estructura de carpetas (`services/ingestion`, `services/agent`, `frontend`, `eval`, `docs`) | ✅ Hecho | P0 | Estructura creada; `infra/init`, `infra/searxng`, `scripts`, `data/corpus` incluidos |
+| F-02 | OBL | `.gitignore`, `.env.example` documentado, política de secretos | ✅ Hecho | P0 | `.env.example` cubre todas las variables de §9 (un test verifica que cubre `Settings`); secretos opcionales comentados |
+| F-03 | OBL | Configuración de linting/formato/tipado y base de tests | ✅ Hecho | P2 | D-14: Ruff, mypy, pytest, pre-commit; ruff, mypy (strict en `common`), pytest y pre-commit configurados; 18 tests |
+| F-04 | OBL | uv workspace (`pyproject.toml` raíz + miembros) + `uv.lock` | ✅ Hecho | P0 | D-14; Workspace con 5 miembros + `uv.lock`; Python 3.12 |
+| F-05 | OBL | gitleaks en pre-commit y CI | 🔄 En curso | P0 | D-14; regla de no-secretos; Configurado (`.gitleaks.toml`, pre-commit, CI). Pendiente: ejecutar gitleaks (no instalado en la sesión) |
+| F-06 | OBL | Makefile (`up`, `up-gpu`, `seed`, `eval`, `test`, `lint`, `down`) | ✅ Hecho | P1 | D-14; Makefile; `up`/`up-gpu` pendientes de verificar con Docker; `seed` y `eval` quedan activos en Fases 1 y 4 |
+| F-07 | OBL | GitHub Actions: lint, mypy, tests, gitleaks | 🔄 En curso | P2 | D-14; `.github/workflows/ci.yml` escrito (python, compose config, gitleaks). Pendiente: primera corrida en GitHub |
 
 ## 2. Req. 1 — Servicio de ingesta
 
@@ -90,7 +90,7 @@ Asistente agéntico de conocimiento para desarrolladores (RAG orquestado como gr
 | V-01 | OBL | Levantar vector DB y crear colección/esquema | ⬜ Por hacer | P0 | |
 | V-02 | OBL | Configurar índice eficiente (HNSW) y documentar parámetros (m, ef_construct, ef…) | ⬜ Por hacer | P0 | |
 | V-03 | OBL | Filtrado por metadatos (p. ej. por documento) | ⬜ Por hacer | P0 | Payload indexes creados antes de ingestar (HNSW filtrable) |
-| V-05 | OBL | Postgres: tabla `documents` (doc_id, nombre, fuente, content_hash, modelo de embeddings, n_chunks, estado, fechas) + migraciones | ⬜ Por hacer | P0 | D-08; base para I-06, O-F, O-D |
+| V-05 | OBL | Postgres: tabla `documents` (doc_id, nombre, fuente, content_hash, modelo de embeddings, n_chunks, estado, fechas) + migraciones | 🔄 En curso | P0 | D-08; base para I-06, O-F, O-D; `001_documents.sql` idempotente + `common.db.migrate`. Pendiente: aplicar en Postgres real |
 | V-04 | OBL | Medir recall@k de HNSW vs búsqueda exacta (`exact=true`) con preguntas de eval + latencia | ⬜ Por hacer | P1 | Evidencia empírica de parámetros D-05; forzar construcción HNSW (umbrales) |
 
 ## 4. Req. 2 — Supervisor
@@ -136,8 +136,8 @@ Asistente agéntico de conocimiento para desarrolladores (RAG orquestado como gr
 | A-05 | OBL | Health checks | ⬜ Por hacer | P2 | |
 | A-06 | OBL | Modelo de eventos tipado (Pydantic): `node_started`, `node_finished`, `token`, `sources`, `interrupt`, `final`; REST agrega eventos | ⬜ Por hacer | P0 | D-13; base de A-03 y reto C |
 | A-07 | OBL | Endpoint `/search` (recuperación pura, filtros, top-k) | ⬜ Por hacer | P0 | D-13; usado por eval (recall@k) y reto A |
-| A-08 | OBL | Interfaces en `packages/common`: `Embedder`, `Retriever` (`DenseRetriever`), `Reranker` (no-op), `SearchProvider`, LLM por rol; selección por `.env` | ⬜ Por hacer | P0 | D-13 |
-| A-09 | OBL | Feature flags en settings: `HITL_ENABLED`, `RETRIEVER`, `RERANKER`, `TRACING`, `SEARCH_PROVIDER` | ⬜ Por hacer | P1 | D-13 |
+| A-08 | OBL | Interfaces en `packages/common`: `Embedder`, `Retriever` (`DenseRetriever`), `Reranker` (no-op), `SearchProvider`, LLM por rol; selección por `.env` | ✅ Hecho | P0 | D-13; `Embedder`/`TEIEmbedder`, `Retriever`/`DenseRetriever`, `Reranker`/`NoopReranker`, `SearchProvider`/`DdgsProvider`, `get_chat_model(role)`; tests con respx y Qdrant en memoria |
+| A-09 | OBL | Feature flags en settings: `HITL_ENABLED`, `RETRIEVER`, `RERANKER`, `TRACING`, `SEARCH_PROVIDER` | ✅ Hecho | P1 | D-13; Flags en `Settings` con `Literal`; validados por test |
 | S-07 | OBL | Nodo `confirm_external_search` pasivo (pass-through si `HITL_ENABLED=false`) antes de `search_odoo_forum` | ⬜ Por hacer | P1 | D-13; enganche reto D |
 
 ## 8. Req. 6 — Interfaz de chat
@@ -180,13 +180,13 @@ Asistente agéntico de conocimiento para desarrolladores (RAG orquestado como gr
 
 | ID | Tipo | Tarea | Estado | Prioridad | Decisión / Contexto |
 |---|---|---|---|---|---|
-| C-01 | OBL | Dockerfile multi-stage por servicio | ⬜ Por hacer | P0 | |
+| C-01 | OBL | Dockerfile multi-stage por servicio | 🔄 En curso | P0 | Dockerfiles de init, agent e ingestion (esqueletos, multi-stage `deps`→`build`→`runtime`, no-root). Pendiente: `docker build`. Frontend en U-13 |
 | C-02 | OBL | Docker Compose: todo con un solo comando | ⬜ Por hacer | P0 | |
 | C-03 | OBL | Variables/secretos por `.env`; prueba en máquina limpia | ⬜ Por hacer | P0 | |
-| C-04 | OBL | Servicio `init` one-shot: tablas Postgres + colección Qdrant + payload indexes antes de ingestar | ⬜ Por hacer | P0 | D-10; garantiza regla D-05 |
-| C-05 | OBL | Healthchecks (pg_isready, Qdrant `/readyz`, TEI `/health`, servicios Python vía `python -c`) + `depends_on: service_healthy` | ⬜ Por hacer | P0 | Verificar curl en imágenes; sidecar si falta |
+| C-04 | OBL | Servicio `init` one-shot: tablas Postgres + colección Qdrant + payload indexes antes de ingestar | 🔄 En curso | P0 | D-10; garantiza regla D-05; `infra/init/bootstrap.py` + `common.qdrant_repo.ensure_collection` (tests con Qdrant en memoria). Pendiente: correr contra servicios reales |
+| C-05 | OBL | Healthchecks (pg_isready, Qdrant `/readyz`, TEI `/health`, servicios Python vía `python -c`) + `depends_on: service_healthy` | 🔄 En curso | P0 | Verificar curl en imágenes; sidecar si falta; Healthchecks en compose; Qdrant y TEI vía `bash /dev/tcp` (V-e sin verificar si la imagen trae bash) |
 | C-06 | OBL | `compose.gpu.yaml` (TEI GPU + reserva de dispositivo) y `compose.override.yaml` (dev, `develop.watch`, Qdrant en loopback) | ⬜ Por hacer | P1 | D-10 |
-| C-07 | OBL | `additional_contexts` para `packages/common` en builds de agent/ingestion/init | ⬜ Por hacer | P0 | Verificar Compose ≥ 2.17 |
+| C-07 | OBL | `additional_contexts` para `packages/common` en builds de agent/ingestion/init | 🔄 En curso | P0 | Verificar Compose ≥ 2.17; `additional_contexts` `common` y `workspace` en `init`; `docker compose config` OK. Pendiente: build real |
 
 ## 11. Retos opcionales (bonus hasta +15%)
 
@@ -557,6 +557,23 @@ Entradas cronológicas (más reciente arriba). Plantilla:
 - Decisiones tomadas (ref. D-XX):
 - Próximos pasos:
 ```
+
+### 2026-11-02 — Fase 0: Fundación
+- Hecho: F-01…F-04, F-06, A-08 y A-09 completas. F-05, F-07, C-01 (esqueletos), C-04, C-05, C-07 y V-05 escritas y probadas hasta donde permite la sesión sin Docker (ver «pendiente»). Repo git en `main`, uv workspace de 5 miembros, `packages/common` (settings, interfaces, `qdrant_repo`, migración 001), `infra/init`, `compose.yaml` con override y GPU, Makefile, pre-commit y CI.
+- Verificado localmente: `ruff check`, `ruff format --check`, `mypy` (24 archivos) y `pytest` (18 tests) en verde; `docker compose config` OK (base y con override + GPU); simulación del `uv sync --frozen --no-install-workspace --package odoo-rag-init` del Dockerfile.
+- Pendiente de verificar (Docker y GitHub no disponibles en la sesión): `make up` (postgres, qdrant y embeddings healthy; `init` sale con 0), healthchecks por `bash /dev/tcp` (V-e), `docker build` de init, agent e ingestion, corrida de CI y gitleaks.
+- Decisiones y desviaciones:
+  1. `compose.yaml` trae solo los servicios de Fase 0. agent, ingestion, frontend y eval se añaden en sus fases, y `develop.watch` del override llega con ellos.
+  2. Contexto de build = carpeta del servicio, con dos `additional_contexts`: `common` (código) y `workspace` (raíz, solo `uv.lock` y `pyproject` por bind mount), porque el `uv.lock` es único del workspace. Stages `deps` → `build` → `runtime`.
+  3. Tags: TEI `cpu-1.8.3` y `89-1.8.3`, Qdrant `v1.20.0` (igual que `qdrant-client` 1.20), Postgres `17.10-alpine`. Su existencia se verificó en los registries.
+  4. V-d resuelto: `create_collection` acepta `metadata`; modelo y dimensión se guardan ahí.
+  5. V-a: `full_scan_threshold` e `indexing_threshold` en 1000 KB (1 KB = 1 vector de 256 dims) para forzar HNSW con unos 2.000–6.000 puntos. Se contrasta en V-04.
+  6. `make up` hace `up -d --build`, `wait init` y `up --wait` de los datastores, para no depender de cómo trata `--wait` a un one-shot.
+  7. `HF_TOKEN`, `DATABASE_URL` y `LANGFUSE_*` van comentadas en `.env.example`: un token vacío no debe llegar a TEI, y `DATABASE_URL` se compone desde `POSTGRES_*`.
+  8. Se añadió `common/db/migrate.py` (runner de migraciones), fuera de la lista del §10.
+  9. `schemas/{api,events,documents}` y `documents_repo.py` quedan para las fases que los usan. El parámetro `effort` de `get_chat_model` queda para la prueba V-k de la Fase 2.
+  10. ruff excluye `*.md`, porque reformatea los bloques de código de los docs.
+- Próximos pasos: el orquestador corre `make up` y verifica; después, Fase 1 (ingesta + vector).
 
 ### 2026-11-02 — Arranque
 - Hecho: análisis de la prueba técnica; creado este backlog con todas las tareas pendientes.
