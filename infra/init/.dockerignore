@@ -1,0 +1,13 @@
+# Build context = this folder only
+.env
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+tests/
+Dockerfile
+.dockerignore

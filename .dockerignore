@@ -1,0 +1,19 @@
+# Root context (used as the `workspace` additional context: only uv.lock and pyproject files are read)
+.git
+.github
+.idea
+.claude
+.env
+.env.*
+!.env.example
+.venv
+**/__pycache__
+**/*.py[cod]
+.mypy_cache
+.ruff_cache
+.pytest_cache
+node_modules
+frontend/.next
+data
+eval/reports
+docs
