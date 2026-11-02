@@ -54,15 +54,15 @@ def test_flags_reject_invalid_values() -> None:
 
 def test_env_example_is_complete_and_loadable() -> None:
     """Every setting is documented in `.env.example`, and the file parses into Settings."""
+    import re
     from pathlib import Path
 
     env_example = next(p for p in Path(__file__).parents if (p / ".env.example").exists()) / (
         ".env.example"
     )
     keys = {
-        line.split("=", 1)[0].strip().lower()
-        for line in env_example.read_text().splitlines()
-        if line.strip() and not line.startswith("#")
+        m.group(1).lower()
+        for m in re.finditer(r"^#? ?([A-Z][A-Z0-9_]*)=", env_example.read_text(), re.MULTILINE)
     }
     assert set(Settings.model_fields) <= keys
     s = Settings(_env_file=env_example)
