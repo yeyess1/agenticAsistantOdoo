@@ -1,0 +1,9 @@
+# gitleaks configuration (F-05): default ruleset plus a narrow allowlist.
+title = "odoo-rag gitleaks"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Dev-only placeholders documented in .env.example"
+paths = ['''^\.env\.example$''']
