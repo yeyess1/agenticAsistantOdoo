@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens (U-04). White base + Odoo-style plum primary (#714B67).
+ * Only the color is borrowed: no Odoo logo or name, so the app does not read as an official product.
+ * Components use the semantic utilities (bg-primary, text-ink-muted, border-line…), never raw hex.
+ */
+:root {
+  --primary: #714b67;
+  --primary-hover: #5e3e56;
+  --primary-strong: #4a2f43;
+  --primary-muted: #d3bfcd;
+  --primary-tint: #f1e8ee;
+  --primary-soft: #f5eef3;
+  --research: #016a6f;
+  --research-soft: #e6f3f3;
+  --background: #ffffff;
+  --surface: #fbf8fa;
+  --line: #ece4ea;
+  --ink: #2b2130;
+  --ink-muted: #6b5a66;
+  --code-bg: #3a2b37;
+  --code-header: #2b2130;
+  --code-ink: #f1e8ee;
+}
+
+@theme inline {
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-strong: var(--primary-strong);
+  --color-primary-muted: var(--primary-muted);
+  --color-primary-tint: var(--primary-tint);
+  --color-primary-soft: var(--primary-soft);
+  --color-research: var(--research);
+  --color-research-soft: var(--research-soft);
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-code-bg: var(--code-bg);
+  --color-code-header: var(--code-header);
+  --color-code-ink: var(--code-ink);
+  --color-foreground: var(--ink);
+  --font-sans: var(--font-plex-sans), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+}
+
+body {
+  background: var(--background);
+  color: var(--ink);
+  font-family: var(--font-plex-sans), system-ui, sans-serif;
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
