@@ -746,6 +746,18 @@
             ],
             "title": "Doc Id"
           },
+          "chunk_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chunk Id",
+            "description": "Qdrant point id of the chunk (eval fetches its text)."
+          },
           "title": {
             "type": "string",
             "title": "Title"
@@ -798,6 +810,7 @@
           "n",
           "kind",
           "doc_id",
+          "chunk_id",
           "title",
           "section",
           "url",

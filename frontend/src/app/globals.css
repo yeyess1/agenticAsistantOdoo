@@ -31,6 +31,10 @@
   --neutral-soft: #f1eff0;
   --danger: #a3253b;
   --danger-soft: #fbeaed;
+  /* Eval dashboard series (U-12), validated with the dataviz palette checker (light). */
+  --chart-agentic: #873d75;
+  --chart-linear: #c2702a;
+  --chart-grid: #ece4ea;
 }
 
 @theme inline {
@@ -54,6 +58,8 @@
   --color-neutral-soft: var(--neutral-soft);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
+  --color-chart-agentic: var(--chart-agentic);
+  --color-chart-linear: var(--chart-linear);
   --color-foreground: var(--ink);
   --font-sans: var(--font-plex-sans), system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;

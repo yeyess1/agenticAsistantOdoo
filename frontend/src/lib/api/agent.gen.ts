@@ -305,6 +305,11 @@ export interface components {
             kind: "doc" | "external";
             /** Doc Id */
             doc_id: string | null;
+            /**
+             * Chunk Id
+             * @description Qdrant point id of the chunk (eval fetches its text).
+             */
+            chunk_id: string | null;
             /** Title */
             title: string;
             /** Section */

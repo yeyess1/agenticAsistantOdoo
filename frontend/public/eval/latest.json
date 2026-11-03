@@ -1,0 +1,2884 @@
+{
+ "run_meta": {
+  "started_at": "2026-11-03T09:59:15+00:00",
+  "git_sha": "76b466c",
+  "label": "",
+  "golden_counts": {
+   "covered": 17,
+   "not_covered": 6,
+   "out_of_scope": 4,
+   "follow_up": 4
+  },
+  "models": {
+   "contextualizer": "claude-haiku-5-5",
+   "router": "claude-haiku-5-5",
+   "grader": "claude-haiku-5-5",
+   "rewriter": "claude-haiku-5-5",
+   "direct": "claude-haiku-5-5",
+   "generator": "claude-sonnet-5-5",
+   "research": "claude-sonnet-5-5",
+   "judge": "claude-opus-5-5"
+  },
+  "settings": {
+   "retriever_top_k": 10,
+   "max_rewrites": 2,
+   "qdrant_hnsw_ef": 128,
+   "embeddings_model": "Qwen/Qwen3-Embedding-0.6B",
+   "hitl_enabled": false,
+   "retriever": "dense",
+   "reranker": "none"
+  },
+  "n_items": 31,
+  "modes": [
+   "agentic",
+   "linear"
+  ],
+  "judge_usage": {
+   "calls": 123,
+   "failures": 46,
+   "input_tokens": 334263,
+   "output_tokens": 57554,
+   "cost_usd": 2.4881,
+   "cost_by_metric": {
+    "behaviour": 0.1964,
+    "relevancy": 0.3214,
+    "faithfulness": 1.3178,
+    "correctness": 0.6525
+   }
+  }
+ },
+ "aggregates": {
+  "agentic": {
+   "all": {
+    "n": 31,
+    "errors": 0,
+    "faithfulness": {
+     "n": 17,
+     "mean": 0.9736,
+     "p50": 1.0,
+     "p95": 1.0
+    },
+    "answer_relevancy": {
+     "n": 17,
+     "mean": 0.6751,
+     "p50": 0.6486,
+     "p95": 0.8565
+    },
+    "correctness_f1": {
+     "n": 17,
+     "mean": 0.6524,
+     "p50": 0.6667,
+     "p95": 0.8
+    },
+    "correctness_precision": 0.5568,
+    "correctness_recall": 0.8116,
+    "behaviour_pass_rate": 1.0,
+    "behaviour_n": 10,
+    "context_precision": 0.886,
+    "context_recall": 0.6,
+    "context_chunks": 2.81,
+    "citation_correctness": 0.8032,
+    "latency_ms": {
+     "n": 31,
+     "mean": 16385.0,
+     "p50": 14040.0,
+     "p95": 47994.0
+    },
+    "input_tokens": 8487.0,
+    "output_tokens": 1629.0,
+    "generator_input_tokens": 2394.0,
+    "cost_usd_mean": 0.01688,
+    "cost_usd_total": 0.5233
+   },
+   "docs_questions": {
+    "n": 21,
+    "errors": 0,
+    "faithfulness": {
+     "n": 17,
+     "mean": 0.9736,
+     "p50": 1.0,
+     "p95": 1.0
+    },
+    "answer_relevancy": {
+     "n": 17,
+     "mean": 0.6751,
+     "p50": 0.6486,
+     "p95": 0.8565
+    },
+    "correctness_f1": {
+     "n": 17,
+     "mean": 0.6524,
+     "p50": 0.6667,
+     "p95": 0.8
+    },
+    "correctness_precision": 0.5568,
+    "correctness_recall": 0.8116,
+    "behaviour_pass_rate": null,
+    "behaviour_n": 0,
+    "context_precision": 0.886,
+    "context_recall": 0.6,
+    "context_chunks": 4.05,
+    "citation_correctness": 0.8032,
+    "latency_ms": {
+     "n": 21,
+     "mean": 13364.0,
+     "p50": 12830.0,
+     "p95": 18137.0
+    },
+    "input_tokens": 8234.0,
+    "output_tokens": 1718.0,
+    "generator_input_tokens": 2424.0,
+    "cost_usd_mean": 0.01684,
+    "cost_usd_total": 0.3536
+   },
+   "covered": {
+    "n": 17,
+    "errors": 0,
+    "faithfulness": {
+     "n": 14,
+     "mean": 0.9725,
+     "p50": 0.9615,
+     "p95": 1.0
+    },
+    "answer_relevancy": {
+     "n": 14,
+     "mean": 0.7011,
+     "p50": 0.6785,
+     "p95": 0.8565
+    },
+    "correctness_f1": {
+     "n": 14,
+     "mean": 0.6588,
+     "p50": 0.6486,
+     "p95": 0.8
+    },
+    "correctness_precision": 0.5544,
+    "correctness_recall": 0.8347,
+    "behaviour_pass_rate": null,
+    "behaviour_n": 0,
+    "context_precision": 0.9193,
+    "context_recall": 0.6382,
+    "context_chunks": 4.35,
+    "citation_correctness": 0.7961,
+    "latency_ms": {
+     "n": 17,
+     "mean": 13838.0,
+     "p50": 14040.0,
+     "p95": 19193.0
+    },
+    "input_tokens": 8259.0,
+    "output_tokens": 1822.0,
+    "generator_input_tokens": 2565.0,
+    "cost_usd_mean": 0.01816,
+    "cost_usd_total": 0.3087
+   },
+   "follow_up": {
+    "n": 4,
+    "errors": 0,
+    "faithfulness": {
+     "n": 3,
+     "mean": 0.9792,
+     "p50": 1.0,
+     "p95": 1.0
+    },
+    "answer_relevancy": {
+     "n": 3,
+     "mean": 0.5537,
+     "p50": 0.5935,
+     "p95": 0.6178
+    },
+    "correctness_f1": {
+     "n": 3,
+     "mean": 0.6222,
+     "p50": 0.6667,
+     "p95": 0.7
+    },
+    "correctness_precision": 0.5677,
+    "correctness_recall": 0.7037,
+    "behaviour_pass_rate": null,
+    "behaviour_n": 0,
+    "context_precision": 0.7445,
+    "context_recall": 0.4375,
+    "context_chunks": 2.75,
+    "citation_correctness": 0.8333,
+    "latency_ms": {
+     "n": 4,
+     "mean": 11350.0,
+     "p50": 10103.0,
+     "p95": 14772.0
+    },
+    "input_tokens": 8126.0,
+    "output_tokens": 1276.0,
+    "generator_input_tokens": 1825.0,
+    "cost_usd_mean": 0.01122,
+    "cost_usd_total": 0.0449
+   },
+   "not_covered": {
+    "n": 6,
+    "errors": 0,
+    "faithfulness": {
+     "n": 0,
+     "mean": null,
+     "p50": null,
+     "p95": null
+    },
+    "answer_relevancy": {
+     "n": 0,
+     "mean": null,
+     "p50": null,
+     "p95": null
+    },
+    "correctness_f1": {
+     "n": 0,
+     "mean": null,
+     "p50": null,
+     "p95": null
+    },
+    "correctness_precision": null,
+    "correctness_recall": null,
+    "behaviour_pass_rate": 1.0,
+    "behaviour_n": 6,
+    "context_precision": null,
+    "context_recall": null,
+    "context_chunks": 0.33,
+    "citation_correctness": null,
+    "latency_ms": {
+     "n": 6,
+     "mean": 36199.0,
+     "p50": 28503.0,
+     "p95": 61575.0
+    },
+    "input_tokens": 14411.0,
+    "output_tokens": 2297.0,
+    "generator_input_tokens": 1756.0,
+    "cost_usd_mean": 0.02816,
+    "cost_usd_total": 0.169
+   },
+   "out_of_scope": {
+    "n": 4,
+    "errors": 0,
+    "faithfulness": {
+     "n": 0,
+     "mean": null,
+     "p50": null,
+     "p95": null
+    },
+    "answer_relevancy": {
+     "n": 0,
+     "mean": null,
+     "p50": null,
+     "p95": null
+    },
+    "correctness_f1": {
+     "n": 0,
+     "mean": null,
+     "p50": null,
+     "p95": null
+    },
+    "correctness_precision": null,
+    "correctness_recall": null,
+    "behaviour_pass_rate": 1.0,
+    "behaviour_n": 4,
+    "context_precision": null,
+    "context_recall": null,
+    "context_chunks": 0.0,
+    "citation_correctness": null,
+    "latency_ms": {
+     "n": 4,
+     "mean": 2520.0,
+     "p50": 2356.0,
+     "p95": 3233.0
+    },
+    "input_tokens": 932.0,
+    "output_tokens": 159.0,
+    "generator_input_tokens": null,
+    "cost_usd_mean": 0.00017,
+    "cost_usd_total": 0.0007
+   }
+  },
+  "linear": {
+   "all": {
+    "n": 31,
+    "errors": 0,
+    "faithfulness": {
+     "n": 17,
+     "mean": 0.966,
+     "p50": 1.0,
+     "p95": 1.0
+    },
+    "answer_relevancy": {
+     "n": 18,
+     "mean": 0.6658,
+     "p50": 0.6558,
+     "p95": 0.869
+    },
+    "correctness_f1": {
+     "n": 17,
+     "mean": 0.6242,
+     "p50": 0.6316,
+     "p95": 0.7143
+    },
+    "correctness_precision": 0.5237,
+    "correctness_recall": 0.7928,
+    "behaviour_pass_rate": 0.9,
+    "behaviour_n": 10,
+    "context_precision": 0.6791,
+    "context_recall": 0.6111,
+    "context_chunks": 10.0,
+    "citation_correctness": 0.6026,
+    "latency_ms": {
+     "n": 31,
+     "mean": 8340.0,
+     "p50": 8319.0,
+     "p95": 12746.0
+    },
+    "input_tokens": 5032.0,
+    "output_tokens": 1054.0,
+    "generator_input_tokens": 5032.0,
+    "cost_usd_mean": 0.02061,
+    "cost_usd_total": 0.6389
+   },
+   "docs_questions": {
+    "n": 21,
+    "errors": 0,
+    "faithfulness": {
+     "n": 17,
+     "mean": 0.966,
+     "p50": 1.0,
+     "p95": 1.0
+    },
+    "answer_relevancy": {
+     "n": 18,
+     "mean": 0.6658,
+     "p50": 0.6558,
+     "p95": 0.869
+    },
+    "correctness_f1": {
+     "n": 17,
+     "mean": 0.6242,
+     "p50": 0.6316,
+     "p95": 0.7143
+    },
+    "correctness_precision": 0.5237,
+    "correctness_recall": 0.7928,
+    "behaviour_pass_rate": null,
+    "behaviour_n": 0,
+    "context_precision": 0.6791,
+    "context_recall": 0.6111,
+    "context_chunks": 10.0,
+    "citation_correctness": 0.6026,
+    "latency_ms": {
+     "n": 21,
+     "mean": 9158.0,
+     "p50": 8922.0,
+     "p95": 12736.0
+    },
+    "input_tokens": 5280.0,
+    "output_tokens": 1203.0,
+    "generator_input_tokens": 5280.0,
+    "cost_usd_mean": 0.02259,
+    "cost_usd_total": 0.4745
+   },
+   "covered": {
+    "n": 17,
+    "errors": 0,
+    "faithfulness": {
+     "n": 14,
+     "mean": 0.9774,
+     "p50": 1.0,
+     "p95": 1.0
+    },
+    "answer_relevancy": {
+     "n": 15,
+     "mean": 0.6864,
+     "p50": 0.6573,
+     "p95": 0.869
+    },
+    "correctness_f1": {
+     "n": 14,
+     "mean": 0.6304,
+     "p50": 0.64,
+     "p95": 0.7143
+    },
+    "correctness_precision": 0.5228,
+    "correctness_recall": 0.8161,
+    "behaviour_pass_rate": null,
+    "behaviour_n": 0,
+    "context_precision": 0.7462,
+    "context_recall": 0.6716,
+    "context_chunks": 10.0,
+    "citation_correctness": 0.6562,
+    "latency_ms": {
+     "n": 17,
+     "mean": 9644.0,
+     "p50": 9965.0,
+     "p95": 13236.0
+    },
+    "input_tokens": 5214.0,
+    "output_tokens": 1301.0,
+    "generator_input_tokens": 5214.0,
+    "cost_usd_mean": 0.02344,
+    "cost_usd_total": 0.3984
+   },
+   "follow_up": {
+    "n": 4,
+    "errors": 0,
+    "faithfulness": {
+     "n": 3,
+     "mean": 0.913,
+     "p50": 0.9167,
+     "p95": 0.9333
+    },
+    "answer_relevancy": {
+     "n": 3,
+     "mean": 0.5625,
+     "p50": 0.6087,
+     "p95": 0.6994
+    },
+    "correctness_f1": {
+     "n": 3,
+     "mean": 0.5954,
+     "p50": 0.5833,
+     "p95": 0.6316
+    },
+    "correctness_precision": 0.528,
+    "correctness_recall": 0.6844,
+    "behaviour_pass_rate": null,
+    "behaviour_n": 0,
+    "context_precision": 0.3941,
+    "context_recall": 0.3542,
+    "context_chunks": 10.0,
+    "citation_correctness": 0.375,
+    "latency_ms": {
+     "n": 4,
+     "mean": 7094.0,
+     "p50": 6183.0,
+     "p95": 8922.0
+    },
+    "input_tokens": 5559.0,
+    "output_tokens": 789.0,
+    "generator_input_tokens": 5559.0,
+    "cost_usd_mean": 0.01901,
+    "cost_usd_total": 0.076
+   },
+   "not_covered": {
+    "n": 6,
+    "errors": 0,
+    "faithfulness": {
+     "n": 0,
+     "mean": null,
+     "p50": null,
+     "p95": null
+    },
+    "answer_relevancy": {
+     "n": 0,
+     "mean": null,
+     "p50": null,
+     "p95": null
+    },
+    "correctness_f1": {
+     "n": 0,
+     "mean": null,
+     "p50": null,
+     "p95": null
+    },
+    "correctness_precision": null,
+    "correctness_recall": null,
+    "behaviour_pass_rate": 1.0,
+    "behaviour_n": 6,
+    "context_precision": null,
+    "context_recall": null,
+    "context_chunks": 10.0,
+    "citation_correctness": null,
+    "latency_ms": {
+     "n": 6,
+     "mean": 8082.0,
+     "p50": 5606.0,
+     "p95": 12746.0
+    },
+    "input_tokens": 4579.0,
+    "output_tokens": 932.0,
+    "generator_input_tokens": 4579.0,
+    "cost_usd_mean": 0.01848,
+    "cost_usd_total": 0.1109
+   },
+   "out_of_scope": {
+    "n": 4,
+    "errors": 0,
+    "faithfulness": {
+     "n": 0,
+     "mean": null,
+     "p50": null,
+     "p95": null
+    },
+    "answer_relevancy": {
+     "n": 0,
+     "mean": null,
+     "p50": null,
+     "p95": null
+    },
+    "correctness_f1": {
+     "n": 0,
+     "mean": null,
+     "p50": null,
+     "p95": null
+    },
+    "correctness_precision": null,
+    "correctness_recall": null,
+    "behaviour_pass_rate": 0.75,
+    "behaviour_n": 4,
+    "context_precision": null,
+    "context_recall": null,
+    "context_chunks": 10.0,
+    "citation_correctness": null,
+    "latency_ms": {
+     "n": 4,
+     "mean": 4434.0,
+     "p50": 3570.0,
+     "p95": 7438.0
+    },
+    "input_tokens": 4411.0,
+    "output_tokens": 455.0,
+    "generator_input_tokens": 4411.0,
+    "cost_usd_mean": 0.01337,
+    "cost_usd_total": 0.0535
+   }
+  }
+ },
+ "comparison": {
+  "all": {
+   "faithfulness": {
+    "agentic": 0.9736,
+    "linear": 0.966,
+    "delta": 0.0076
+   },
+   "answer_relevancy": {
+    "agentic": 0.6751,
+    "linear": 0.6658,
+    "delta": 0.0093
+   },
+   "correctness_f1": {
+    "agentic": 0.6524,
+    "linear": 0.6242,
+    "delta": 0.0282
+   },
+   "behaviour_pass_rate": {
+    "agentic": 1.0,
+    "linear": 0.9,
+    "delta": 0.1
+   },
+   "context_precision": {
+    "agentic": 0.886,
+    "linear": 0.6791,
+    "delta": 0.2069
+   },
+   "latency_ms_p50": {
+    "agentic": 14040.0,
+    "linear": 8319.0,
+    "delta": 5721.0
+   },
+   "cost_usd_mean": {
+    "agentic": 0.01688,
+    "linear": 0.02061,
+    "delta": -0.0037
+   },
+   "input_tokens": {
+    "agentic": 8487.0,
+    "linear": 5032.0,
+    "delta": 3455.0
+   }
+  },
+  "docs_questions": {
+   "faithfulness": {
+    "agentic": 0.9736,
+    "linear": 0.966,
+    "delta": 0.0076
+   },
+   "answer_relevancy": {
+    "agentic": 0.6751,
+    "linear": 0.6658,
+    "delta": 0.0093
+   },
+   "correctness_f1": {
+    "agentic": 0.6524,
+    "linear": 0.6242,
+    "delta": 0.0282
+   },
+   "behaviour_pass_rate": {
+    "agentic": null,
+    "linear": null,
+    "delta": null
+   },
+   "context_precision": {
+    "agentic": 0.886,
+    "linear": 0.6791,
+    "delta": 0.2069
+   },
+   "latency_ms_p50": {
+    "agentic": 12830.0,
+    "linear": 8922.0,
+    "delta": 3908.0
+   },
+   "cost_usd_mean": {
+    "agentic": 0.01684,
+    "linear": 0.02259,
+    "delta": -0.0057
+   },
+   "input_tokens": {
+    "agentic": 8234.0,
+    "linear": 5280.0,
+    "delta": 2954.0
+   }
+  },
+  "not_covered": {
+   "faithfulness": {
+    "agentic": null,
+    "linear": null,
+    "delta": null
+   },
+   "answer_relevancy": {
+    "agentic": null,
+    "linear": null,
+    "delta": null
+   },
+   "correctness_f1": {
+    "agentic": null,
+    "linear": null,
+    "delta": null
+   },
+   "behaviour_pass_rate": {
+    "agentic": 1.0,
+    "linear": 1.0,
+    "delta": 0.0
+   },
+   "context_precision": {
+    "agentic": null,
+    "linear": null,
+    "delta": null
+   },
+   "latency_ms_p50": {
+    "agentic": 28503.0,
+    "linear": 5606.0,
+    "delta": 22897.0
+   },
+   "cost_usd_mean": {
+    "agentic": 0.02816,
+    "linear": 0.01848,
+    "delta": 0.0097
+   },
+   "input_tokens": {
+    "agentic": 14411.0,
+    "linear": 4579.0,
+    "delta": 9832.0
+   }
+  },
+  "out_of_scope": {
+   "faithfulness": {
+    "agentic": null,
+    "linear": null,
+    "delta": null
+   },
+   "answer_relevancy": {
+    "agentic": null,
+    "linear": null,
+    "delta": null
+   },
+   "correctness_f1": {
+    "agentic": null,
+    "linear": null,
+    "delta": null
+   },
+   "behaviour_pass_rate": {
+    "agentic": 1.0,
+    "linear": 0.75,
+    "delta": 0.25
+   },
+   "context_precision": {
+    "agentic": null,
+    "linear": null,
+    "delta": null
+   },
+   "latency_ms_p50": {
+    "agentic": 2356.0,
+    "linear": 3570.0,
+    "delta": -1214.0
+   },
+   "cost_usd_mean": {
+    "agentic": 0.00017,
+    "linear": 0.01337,
+    "delta": -0.0132
+   },
+   "input_tokens": {
+    "agentic": 932.0,
+    "linear": 4411.0,
+    "delta": -3479.0
+   }
+  },
+  "paired_docs_questions": {
+   "faithfulness": {
+    "n": 14,
+    "agentic": 0.968,
+    "linear": 0.9625,
+    "delta": 0.0055,
+    "agentic_wins": 5,
+    "linear_wins": 6
+   },
+   "answer_relevancy": {
+    "n": 15,
+    "agentic": 0.6609,
+    "linear": 0.665,
+    "delta": -0.0041,
+    "agentic_wins": 6,
+    "linear_wins": 8
+   },
+   "correctness_f1": {
+    "n": 14,
+    "agentic": 0.6442,
+    "linear": 0.6253,
+    "delta": 0.0189,
+    "agentic_wins": 7,
+    "linear_wins": 5
+   }
+  }
+ },
+ "rewriter": {
+  "expects_rewrite_n": 3,
+  "expects_rewrite_triggered": [],
+  "triggered_without_expectation": [
+   "q21",
+   "q22",
+   "q23"
+  ]
+ },
+ "retrieval": {
+  "es": {
+   "n": 19,
+   "recall@1": 0.2491,
+   "recall@3": 0.4509,
+   "recall@5": 0.5368,
+   "recall@10": 0.6404,
+   "precision@1": 0.6842,
+   "precision@3": 0.5965,
+   "precision@5": 0.4737,
+   "precision@10": 0.3263,
+   "mrr": 0.8246,
+   "context_precision@10": 0.7378
+  },
+  "en": {
+   "n": 19,
+   "recall@1": 0.2518,
+   "recall@3": 0.4386,
+   "recall@5": 0.5175,
+   "recall@10": 0.6421,
+   "precision@1": 0.7368,
+   "precision@3": 0.5789,
+   "precision@5": 0.4526,
+   "precision@10": 0.3,
+   "mrr": 0.8596,
+   "context_precision@10": 0.7858
+  },
+  "delta_en_minus_es": {
+   "recall@1": 0.0027,
+   "recall@3": -0.0123,
+   "recall@5": -0.0193,
+   "recall@10": 0.0017,
+   "precision@1": 0.0526,
+   "precision@3": -0.0176,
+   "precision@5": -0.0211,
+   "precision@10": -0.0263,
+   "mrr": 0.035,
+   "context_precision@10": 0.048
+  },
+  "recall@10_wins": {
+   "en_better": [
+    "q02",
+    "q06",
+    "q10"
+   ],
+   "es_better": [
+    "q07",
+    "q08",
+    "q09"
+   ]
+  }
+ },
+ "hnsw_vs_exact": {
+  "n_queries": 62,
+  "top_k": 10,
+  "repeats": 5,
+  "collection": {
+   "points_count": 832,
+   "indexed_vectors_count": 832,
+   "segments_count": 8,
+   "m": 16,
+   "ef_construct": 200,
+   "full_scan_threshold_kb": 100,
+   "indexing_threshold_kb": 100
+  },
+  "exact": {
+   "latency_ms_p50": 1.211,
+   "latency_ms_p95": 1.458
+  },
+  "hnsw": [
+   {
+    "hnsw_ef": 10,
+    "recall@1": 0.9839,
+    "recall@5": 0.9871,
+    "recall@10": 0.9823,
+    "min_recall@10": 0.8,
+    "latency_ms_p50": 1.158,
+    "latency_ms_p95": 1.374
+   },
+   {
+    "hnsw_ef": 16,
+    "recall@1": 1.0,
+    "recall@5": 1.0,
+    "recall@10": 0.9968,
+    "min_recall@10": 0.9,
+    "latency_ms_p50": 1.27,
+    "latency_ms_p95": 1.614
+   },
+   {
+    "hnsw_ef": 32,
+    "recall@1": 1.0,
+    "recall@5": 1.0,
+    "recall@10": 1.0,
+    "min_recall@10": 1.0,
+    "latency_ms_p50": 1.202,
+    "latency_ms_p95": 1.405
+   },
+   {
+    "hnsw_ef": 64,
+    "recall@1": 1.0,
+    "recall@5": 1.0,
+    "recall@10": 1.0,
+    "min_recall@10": 1.0,
+    "latency_ms_p50": 1.262,
+    "latency_ms_p95": 1.635
+   },
+   {
+    "hnsw_ef": 128,
+    "recall@1": 1.0,
+    "recall@5": 1.0,
+    "recall@10": 1.0,
+    "min_recall@10": 1.0,
+    "latency_ms_p50": 1.247,
+    "latency_ms_p95": 1.476
+   },
+   {
+    "hnsw_ef": 256,
+    "recall@1": 1.0,
+    "recall@5": 1.0,
+    "recall@10": 1.0,
+    "min_recall@10": 1.0,
+    "latency_ms_p50": 1.195,
+    "latency_ms_p95": 1.316
+   }
+  ]
+ },
+ "routing": {
+  "agentic": {
+   "final_agent": {
+    "n": 31,
+    "correct": 30,
+    "accuracy": 0.967741935483871,
+    "labels": [
+     "docs",
+     "research",
+     "direct"
+    ],
+    "confusion": {
+     "docs": {
+      "docs": 21,
+      "research": 0,
+      "direct": 0,
+      "none": 0
+     },
+     "research": {
+      "docs": 1,
+      "research": 5,
+      "direct": 0,
+      "none": 0
+     },
+     "direct": {
+      "docs": 0,
+      "research": 0,
+      "direct": 4,
+      "none": 0
+     }
+    },
+    "per_class": {
+     "docs": {
+      "precision": 0.9545454545454546,
+      "recall": 1.0,
+      "f1": 0.9767441860465117,
+      "support": 21
+     },
+     "research": {
+      "precision": 1.0,
+      "recall": 0.8333333333333334,
+      "f1": 0.9090909090909091,
+      "support": 6
+     },
+     "direct": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 4
+     }
+    }
+   },
+   "router_decision": {
+    "n": 31,
+    "correct": 28,
+    "accuracy": 0.9032258064516129,
+    "labels": [
+     "docs",
+     "research",
+     "direct"
+    ],
+    "confusion": {
+     "docs": {
+      "docs": 21,
+      "research": 0,
+      "direct": 0,
+      "none": 0
+     },
+     "research": {
+      "docs": 3,
+      "research": 3,
+      "direct": 0,
+      "none": 0
+     },
+     "direct": {
+      "docs": 0,
+      "research": 0,
+      "direct": 4,
+      "none": 0
+     }
+    },
+    "per_class": {
+     "docs": {
+      "precision": 0.875,
+      "recall": 1.0,
+      "f1": 0.9333333333333333,
+      "support": 21
+     },
+     "research": {
+      "precision": 1.0,
+      "recall": 0.5,
+      "f1": 0.6666666666666666,
+      "support": 6
+     },
+     "direct": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 4
+     }
+    }
+   }
+  },
+  "linear": {
+   "final_agent": {
+    "n": 31,
+    "correct": 21,
+    "accuracy": 0.6774193548387096,
+    "labels": [
+     "docs",
+     "research",
+     "direct"
+    ],
+    "confusion": {
+     "docs": {
+      "docs": 21,
+      "research": 0,
+      "direct": 0,
+      "none": 0
+     },
+     "research": {
+      "docs": 6,
+      "research": 0,
+      "direct": 0,
+      "none": 0
+     },
+     "direct": {
+      "docs": 4,
+      "research": 0,
+      "direct": 0,
+      "none": 0
+     }
+    },
+    "per_class": {
+     "docs": {
+      "precision": 0.6774193548387096,
+      "recall": 1.0,
+      "f1": 0.8076923076923077,
+      "support": 21
+     },
+     "research": {
+      "precision": null,
+      "recall": 0.0,
+      "f1": null,
+      "support": 6
+     },
+     "direct": {
+      "precision": null,
+      "recall": 0.0,
+      "f1": null,
+      "support": 4
+     }
+    }
+   },
+   "router_decision": {
+    "n": 31,
+    "correct": 21,
+    "accuracy": 0.6774193548387096,
+    "labels": [
+     "docs",
+     "research",
+     "direct"
+    ],
+    "confusion": {
+     "docs": {
+      "docs": 21,
+      "research": 0,
+      "direct": 0,
+      "none": 0
+     },
+     "research": {
+      "docs": 6,
+      "research": 0,
+      "direct": 0,
+      "none": 0
+     },
+     "direct": {
+      "docs": 4,
+      "research": 0,
+      "direct": 0,
+      "none": 0
+     }
+    },
+    "per_class": {
+     "docs": {
+      "precision": 0.6774193548387096,
+      "recall": 1.0,
+      "f1": 0.8076923076923077,
+      "support": 21
+     },
+     "research": {
+      "precision": null,
+      "recall": 0.0,
+      "f1": null,
+      "support": 6
+     },
+     "direct": {
+      "precision": null,
+      "recall": 0.0,
+      "f1": null,
+      "support": 4
+     }
+    }
+   }
+  }
+ },
+ "node_evidence": {
+  "contextualize": [
+   {
+    "id": "q29",
+    "standalone_question": "En mi modelo de propiedades tengo un campo Many2one `buyer_id` apuntando a `res.partner`. ¿Cómo hago para, desde el partner (res.partner), ver todas las propiedades que tienen ese campo apuntando a él?",
+    "raw": {
+     "recall@10": 0.6667,
+     "rr": 0.2
+    },
+    "standalone": {
+     "recall@10": 0.6667,
+     "rr": 0.3333
+    }
+   },
+   {
+    "id": "q31",
+    "standalone_question": "¿Cómo defino y registro un servicio propio en el cliente web de Odoo 19 para que se inicie junto con la aplicación, de forma similar al servicio `orm` o `rpc`?",
+    "raw": {
+     "recall@10": 0.0,
+     "rr": 0.0
+    },
+    "standalone": {
+     "recall@10": 0.3333,
+     "rr": 0.1667
+    }
+   }
+  ],
+  "rewriter": []
+ },
+ "per_node": {
+  "agentic": {
+   "generator": {
+    "calls": 22,
+    "duration_ms_mean": 8175.0,
+    "duration_ms_p95": 13231.0,
+    "input_tokens_mean": 2394.0,
+    "output_tokens_mean": 1110.0,
+    "cost_usd_total": 0.3496,
+    "cost_share": 0.668
+   },
+   "research_llm": {
+    "calls": 15,
+    "duration_ms_mean": 3946.0,
+    "duration_ms_p95": 10723.0,
+    "input_tokens_mean": 2588.0,
+    "output_tokens_mean": 462.0,
+    "cost_usd_total": 0.147,
+    "cost_share": 0.281
+   },
+   "grader": {
+    "calls": 29,
+    "duration_ms_mean": 3160.0,
+    "duration_ms_p95": 4959.0,
+    "input_tokens_mean": 4939.0,
+    "output_tokens_mean": 506.0,
+    "cost_usd_total": 0.0217,
+    "cost_share": 0.041
+   },
+   "router": {
+    "calls": 31,
+    "duration_ms_mean": 1675.0,
+    "duration_ms_p95": 2753.0,
+    "input_tokens_mean": 673.0,
+    "output_tokens_mean": 104.0,
+    "cost_usd_total": 0.0037,
+    "cost_share": 0.007
+   },
+   "rewriter": {
+    "calls": 5,
+    "duration_ms_mean": 1974.0,
+    "duration_ms_p95": 2627.0,
+    "input_tokens_mean": 942.0,
+    "output_tokens_mean": 126.0,
+    "cost_usd_total": 0.0008,
+    "cost_share": 0.002
+   },
+   "direct_answer": {
+    "calls": 4,
+    "duration_ms_mean": 1171.0,
+    "duration_ms_p95": 1603.0,
+    "input_tokens_mean": 296.0,
+    "output_tokens_mean": 104.0,
+    "cost_usd_total": 0.0003,
+    "cost_share": 0.001
+   },
+   "contextualize": {
+    "calls": 31,
+    "duration_ms_mean": 87.0,
+    "duration_ms_p95": 1266.0,
+    "input_tokens_mean": 52.0,
+    "output_tokens_mean": 5.0,
+    "cost_usd_total": 0.0002,
+    "cost_share": 0.0
+   },
+   "retriever": {
+    "calls": 29,
+    "duration_ms_mean": 274.0,
+    "duration_ms_p95": 345.0,
+    "input_tokens_mean": 0.0,
+    "output_tokens_mean": 0.0,
+    "cost_usd_total": 0.0,
+    "cost_share": 0.0
+   },
+   "confirm_external_search": {
+    "calls": 5,
+    "duration_ms_mean": 0.0,
+    "duration_ms_p95": 0.0,
+    "input_tokens_mean": 0.0,
+    "output_tokens_mean": 0.0,
+    "cost_usd_total": 0.0,
+    "cost_share": 0.0
+   },
+   "tools": {
+    "calls": 10,
+    "duration_ms_mean": 9947.0,
+    "duration_ms_p95": 30833.0,
+    "input_tokens_mean": 0.0,
+    "output_tokens_mean": 0.0,
+    "cost_usd_total": 0.0,
+    "cost_share": 0.0
+   },
+   "finalize_external": {
+    "calls": 5,
+    "duration_ms_mean": 0.0,
+    "duration_ms_p95": 0.0,
+    "input_tokens_mean": 0.0,
+    "output_tokens_mean": 0.0,
+    "cost_usd_total": 0.0,
+    "cost_share": 0.0
+   },
+   "no_context": {
+    "calls": 2,
+    "duration_ms_mean": 0.0,
+    "duration_ms_p95": 0.0,
+    "input_tokens_mean": 0.0,
+    "output_tokens_mean": 0.0,
+    "cost_usd_total": 0.0,
+    "cost_share": 0.0
+   }
+  },
+  "linear": {
+   "generator": {
+    "calls": 31,
+    "duration_ms_mean": 8039.0,
+    "duration_ms_p95": 12469.0,
+    "input_tokens_mean": 5032.0,
+    "output_tokens_mean": 1054.0,
+    "cost_usd_total": 0.6389,
+    "cost_share": 1.0
+   },
+   "retriever": {
+    "calls": 31,
+    "duration_ms_mean": 297.0,
+    "duration_ms_p95": 615.0,
+    "input_tokens_mean": 0.0,
+    "output_tokens_mean": 0.0,
+    "cost_usd_total": 0.0,
+    "cost_share": 0.0
+   }
+  }
+ },
+ "costs": {
+  "agent_usd": {
+   "agentic": 0.5233,
+   "linear": 0.6389
+  },
+  "judge_usd": 2.4881,
+  "total_usd": 3.6503
+ },
+ "per_question": [
+  {
+   "id": "q01",
+   "category": "covered",
+   "question": "¿Cómo defino un campo calculado en Odoo 19 que dependa de otros campos (incluso de un campo de un registro relacionado), que se pueda editar a mano y por el que se pueda buscar o agrupar?",
+   "expected_agent": "docs",
+   "retrieval": {
+    "es": {
+     "recall@10": 0.8,
+     "rr": 1.0
+    },
+    "en": {
+     "recall@10": 0.8,
+     "rr": 1.0
+    }
+   },
+   "runs": {
+    "agentic": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 16981,
+     "usage": {
+      "input_tokens": 9257,
+      "output_tokens": 2002,
+      "cost_usd": 0.022063
+     },
+     "context_precision": 1.0,
+     "context_chunks": 5,
+     "citation_correctness": 1.0,
+     "faithfulness": 1.0,
+     "answer_relevancy": 0.7682,
+     "correctness_f1": 0.6667,
+     "behaviour_passed": null
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 13236,
+     "usage": {
+      "input_tokens": 5620,
+      "output_tokens": 1786,
+      "cost_usd": 0.0291
+     },
+     "context_precision": 0.7133,
+     "context_chunks": 10,
+     "citation_correctness": 0.75,
+     "faithfulness": 1.0,
+     "answer_relevancy": 0.7882,
+     "correctness_f1": 0.6667,
+     "behaviour_passed": null
+    }
+   }
+  },
+  {
+   "id": "q02",
+   "category": "covered",
+   "question": "Tengo una app multiempresa: ¿cómo hago que cada usuario solo vea los registros de las compañías a las que tiene acceso, y cómo se combinan esas reglas con las reglas por grupo?",
+   "expected_agent": "docs",
+   "retrieval": {
+    "es": {
+     "recall@10": 0.8,
+     "rr": 1.0
+    },
+    "en": {
+     "recall@10": 1.0,
+     "rr": 1.0
+    }
+   },
+   "runs": {
+    "agentic": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 14715,
+     "usage": {
+      "input_tokens": 9250,
+      "output_tokens": 1914,
+      "cost_usd": 0.022081
+     },
+     "context_precision": 0.9151,
+     "context_chunks": 7,
+     "citation_correctness": 1.0,
+     "faithfulness": null,
+     "answer_relevancy": null,
+     "correctness_f1": null,
+     "behaviour_passed": null
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 11702,
+     "usage": {
+      "input_tokens": 5097,
+      "output_tokens": 1571,
+      "cost_usd": 0.025904
+     },
+     "context_precision": 0.8972,
+     "context_chunks": 10,
+     "citation_correctness": 0.8333,
+     "faithfulness": 0.9474,
+     "answer_relevancy": 0.6178,
+     "correctness_f1": 0.5,
+     "behaviour_passed": null
+    }
+   }
+  },
+  {
+   "id": "q03",
+   "category": "covered",
+   "question": "¿Qué necesito para crear un reporte PDF de mi modelo que aparezca en el menú Imprimir, y cómo le cambio el formato de papel?",
+   "expected_agent": "docs",
+   "retrieval": {
+    "es": {
+     "recall@10": 0.8333,
+     "rr": 1.0
+    },
+    "en": {
+     "recall@10": 0.8333,
+     "rr": 1.0
+    }
+   },
+   "runs": {
+    "agentic": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 18137,
+     "usage": {
+      "input_tokens": 8800,
+      "output_tokens": 2483,
+      "cost_usd": 0.026846
+     },
+     "context_precision": 0.8529,
+     "context_chunks": 7,
+     "citation_correctness": 1.0,
+     "faithfulness": 0.9545,
+     "answer_relevancy": 0.6486,
+     "correctness_f1": 0.68,
+     "behaviour_passed": null
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 12342,
+     "usage": {
+      "input_tokens": 4409,
+      "output_tokens": 1566,
+      "cost_usd": 0.024478
+     },
+     "context_precision": 0.7343,
+     "context_chunks": 10,
+     "citation_correctness": 0.8333,
+     "faithfulness": 1.0,
+     "answer_relevancy": 0.634,
+     "correctness_f1": 0.7143,
+     "behaviour_passed": null
+    }
+   }
+  },
+  {
+   "id": "q04",
+   "category": "covered",
+   "question": "Quiero un widget de campo propio en OWL para usarlo en una vista de formulario con `widget=\"...\"`. ¿Cómo lo creo, cómo lo registro y dónde declaro sus archivos JS y XML?",
+   "expected_agent": "docs",
+   "retrieval": {
+    "es": {
+     "recall@10": 0.4,
+     "rr": 1.0
+    },
+    "en": {
+     "recall@10": 0.4,
+     "rr": 1.0
+    }
+   },
+   "runs": {
+    "agentic": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 14821,
+     "usage": {
+      "input_tokens": 8179,
+      "output_tokens": 2020,
+      "cost_usd": 0.020912
+     },
+     "context_precision": 1.0,
+     "context_chunks": 5,
+     "citation_correctness": 0.6,
+     "faithfulness": 0.9565,
+     "answer_relevancy": 0.7087,
+     "correctness_f1": 0.6154,
+     "behaviour_passed": null
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 9965,
+     "usage": {
+      "input_tokens": 4910,
+      "output_tokens": 1417,
+      "cost_usd": 0.02399
+     },
+     "context_precision": 0.7222,
+     "context_chunks": 10,
+     "citation_correctness": 0.6,
+     "faithfulness": 1.0,
+     "answer_relevancy": 0.7516,
+     "correctness_f1": 0.64,
+     "behaviour_passed": null
+    }
+   }
+  },
+  {
+   "id": "q05",
+   "category": "covered",
+   "question": "¿Cómo agrego un campo nuevo a una vista de formulario de otro módulo sin tocar su XML, y cómo debería nombrar el registro de la vista heredada?",
+   "expected_agent": "docs",
+   "retrieval": {
+    "es": {
+     "recall@10": 0.6,
+     "rr": 1.0
+    },
+    "en": {
+     "recall@10": 0.6,
+     "rr": 1.0
+    }
+   },
+   "runs": {
+    "agentic": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 12497,
+     "usage": {
+      "input_tokens": 9401,
+      "output_tokens": 1750,
+      "cost_usd": 0.019128
+     },
+     "context_precision": 0.8875,
+     "context_chunks": 5,
+     "citation_correctness": 0.75,
+     "faithfulness": null,
+     "answer_relevancy": null,
+     "correctness_f1": null,
+     "behaviour_passed": null
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 8474,
+     "usage": {
+      "input_tokens": 5716,
+      "output_tokens": 1198,
+      "cost_usd": 0.023412
+     },
+     "context_precision": 0.7611,
+     "context_chunks": 10,
+     "citation_correctness": 0.6,
+     "faithfulness": 1.0,
+     "answer_relevancy": 0.6558,
+     "correctness_f1": 0.6429,
+     "behaviour_passed": null
+    }
+   }
+  },
+  {
+   "id": "q06",
+   "category": "covered",
+   "question": "¿Cómo escribo pruebas unitarias en Python para mi módulo y cómo ejecuto solo una clase o un método de test desde la línea de comandos?",
+   "expected_agent": "docs",
+   "retrieval": {
+    "es": {
+     "recall@10": 0.6667,
+     "rr": 1.0
+    },
+    "en": {
+     "recall@10": 0.8333,
+     "rr": 1.0
+    }
+   },
+   "runs": {
+    "agentic": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 15365,
+     "usage": {
+      "input_tokens": 8336,
+      "output_tokens": 2111,
+      "cost_usd": 0.022998
+     },
+     "context_precision": 1.0,
+     "context_chunks": 5,
+     "citation_correctness": 1.0,
+     "faithfulness": 0.96,
+     "answer_relevancy": 0.6448,
+     "correctness_f1": 0.6829,
+     "behaviour_passed": null
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 12736,
+     "usage": {
+      "input_tokens": 4862,
+      "output_tokens": 1848,
+      "cost_usd": 0.028204
+     },
+     "context_precision": 0.86,
+     "context_chunks": 10,
+     "citation_correctness": 0.8333,
+     "faithfulness": 1.0,
+     "answer_relevancy": 0.599,
+     "correctness_f1": 0.6154,
+     "behaviour_passed": null
+    }
+   }
+  },
+  {
+   "id": "q07",
+   "category": "covered",
+   "question": "Tengo una integración que usa XML-RPC con `execute_kw`. ¿Qué cambia si la paso a la nueva API JSON-2 de Odoo 19 y hasta cuándo seguirá funcionando XML-RPC?",
+   "expected_agent": "docs",
+   "retrieval": {
+    "es": {
+     "recall@10": 0.6667,
+     "rr": 0.5
+    },
+    "en": {
+     "recall@10": 0.5,
+     "rr": 0.5
+    }
+   },
+   "runs": {
+    "agentic": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 12830,
+     "usage": {
+      "input_tokens": 8979,
+      "output_tokens": 1832,
+      "cost_usd": 0.019712
+     },
+     "context_precision": 0.5845,
+     "context_chunks": 7,
+     "citation_correctness": 0.5714,
+     "faithfulness": 1.0,
+     "answer_relevancy": 0.7685,
+     "correctness_f1": 0.5714,
+     "behaviour_passed": null
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 10712,
+     "usage": {
+      "input_tokens": 4539,
+      "output_tokens": 1512,
+      "cost_usd": 0.024198
+     },
+     "context_precision": 0.6231,
+     "context_chunks": 10,
+     "citation_correctness": 0.5714,
+     "faithfulness": null,
+     "answer_relevancy": null,
+     "correctness_f1": null,
+     "behaviour_passed": null
+    }
+   }
+  },
+  {
+   "id": "q08",
+   "category": "covered",
+   "question": "En una nueva versión de mi módulo renombré un campo. ¿Cómo escribo el script de migración para que no se pierdan los datos ni se rompan filtros o acciones que lo usan?",
+   "expected_agent": "docs",
+   "retrieval": {
+    "es": {
+     "recall@10": 0.6667,
+     "rr": 0.3333
+    },
+    "en": {
+     "recall@10": 0.5,
+     "rr": 1.0
+    }
+   },
+   "runs": {
+    "agentic": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 19193,
+     "usage": {
+      "input_tokens": 8479,
+      "output_tokens": 2420,
+      "cost_usd": 0.022971
+     },
+     "context_precision": 1.0,
+     "context_chunks": 4,
+     "citation_correctness": 1.0,
+     "faithfulness": 0.9444,
+     "answer_relevancy": 0.6145,
+     "correctness_f1": 0.5625,
+     "behaviour_passed": null
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 9720,
+     "usage": {
+      "input_tokens": 5401,
+      "output_tokens": 1359,
+      "cost_usd": 0.024392
+     },
+     "context_precision": 0.4833,
+     "context_chunks": 10,
+     "citation_correctness": 0.8,
+     "faithfulness": 1.0,
+     "answer_relevancy": 0.6145,
+     "correctness_f1": 0.6111,
+     "behaviour_passed": null
+    }
+   }
+  },
+  {
+   "id": "q09",
+   "category": "covered",
+   "question": "Voy a empezar un módulo desde cero: ¿qué comandos de odoo-bin uso para generar su estructura base, crear una base de datos nueva, instalar el módulo y abrir una consola Python con acceso al ORM?",
+   "expected_agent": "docs",
+   "retrieval": {
+    "es": {
+     "recall@10": 0.8,
+     "rr": 1.0
+    },
+    "en": {
+     "recall@10": 0.6,
+     "rr": 0.5
+    }
+   },
+   "runs": {
+    "agentic": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 14040,
+     "usage": {
+      "input_tokens": 7537,
+      "output_tokens": 1821,
+      "cost_usd": 0.01706
+     },
+     "context_precision": 1.0,
+     "context_chunks": 4,
+     "citation_correctness": 0.75,
+     "faithfulness": 0.9,
+     "answer_relevancy": 0.7955,
+     "correctness_f1": 0.6486,
+     "behaviour_passed": null
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 12149,
+     "usage": {
+      "input_tokens": 4795,
+      "output_tokens": 1623,
+      "cost_usd": 0.02582
+     },
+     "context_precision": 0.9167,
+     "context_chunks": 10,
+     "citation_correctness": 0.5,
+     "faithfulness": 0.9615,
+     "answer_relevancy": 0.8027,
+     "correctness_f1": 0.6316,
+     "behaviour_passed": null
+    }
+   }
+  },
+  {
+   "id": "q10",
+   "category": "covered",
+   "question": "¿Cómo declaro en Odoo 19 una restricción SQL (por ejemplo, precio > 0) y cuándo me conviene más una restricción en Python con `@api.constrains`?",
+   "expected_agent": "docs",
+   "retrieval": {
+    "es": {
+     "recall@10": 0.4,
+     "rr": 1.0
+    },
+    "en": {
+     "recall@10": 0.6,
+     "rr": 1.0
+    }
+   },
+   "runs": {
+    "agentic": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 12360,
+     "usage": {
+      "input_tokens": 8619,
+      "output_tokens": 1774,
+      "cost_usd": 0.018689
+     },
+     "context_precision": 0.75,
+     "context_chunks": 4,
+     "citation_correctness": 0.5,
+     "faithfulness": 1.0,
+     "answer_relevancy": 0.8565,
+     "correctness_f1": 0.7222,
+     "behaviour_passed": null
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 10453,
+     "usage": {
+      "input_tokens": 5684,
+      "output_tokens": 1365,
+      "cost_usd": 0.025018
+     },
+     "context_precision": 0.6667,
+     "context_chunks": 10,
+     "citation_correctness": 0.3333,
+     "faithfulness": 1.0,
+     "answer_relevancy": 0.869,
+     "correctness_f1": 0.6154,
+     "behaviour_passed": null
+    }
+   }
+  },
+  {
+   "id": "q11",
+   "category": "covered",
+   "question": "Según las guías de código de Odoo, ¿en qué orden deben ir los atributos y métodos dentro de una clase de modelo?",
+   "expected_agent": "docs",
+   "retrieval": {
+    "es": {
+     "recall@10": 1.0,
+     "rr": 1.0
+    },
+    "en": {
+     "recall@10": 1.0,
+     "rr": 1.0
+    }
+   },
+   "runs": {
+    "agentic": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 10296,
+     "usage": {
+      "input_tokens": 6910,
+      "output_tokens": 1606,
+      "cost_usd": 0.011934
+     },
+     "context_precision": 1.0,
+     "context_chunks": 1,
+     "citation_correctness": 1.0,
+     "faithfulness": 1.0,
+     "answer_relevancy": 0.7357,
+     "correctness_f1": 0.7692,
+     "behaviour_passed": null
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 6076,
+     "usage": {
+      "input_tokens": 5330,
+      "output_tokens": 937,
+      "cost_usd": 0.02003
+     },
+     "context_precision": 1.0,
+     "context_chunks": 10,
+     "citation_correctness": 0.5,
+     "faithfulness": 1.0,
+     "answer_relevancy": 0.7277,
+     "correctness_f1": 0.6667,
+     "behaviour_passed": null
+    }
+   }
+  },
+  {
+   "id": "q12",
+   "category": "covered",
+   "question": "Con la API JSON-2, ¿puedo hacer varias llamadas seguidas dentro de una misma transacción para que se reviertan todas si una falla?",
+   "expected_agent": "docs",
+   "retrieval": {
+    "es": {
+     "recall@10": 1.0,
+     "rr": 1.0
+    },
+    "en": {
+     "recall@10": 1.0,
+     "rr": 1.0
+    }
+   },
+   "runs": {
+    "agentic": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 8129,
+     "usage": {
+      "input_tokens": 6432,
+      "output_tokens": 1043,
+      "cost_usd": 0.007725
+     },
+     "context_precision": 1.0,
+     "context_chunks": 1,
+     "citation_correctness": 1.0,
+     "faithfulness": 1.0,
+     "answer_relevancy": 0.7933,
+     "correctness_f1": 0.7,
+     "behaviour_passed": null
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 4645,
+     "usage": {
+      "input_tokens": 4654,
+      "output_tokens": 580,
+      "cost_usd": 0.015108
+     },
+     "context_precision": 1.0,
+     "context_chunks": 10,
+     "citation_correctness": 1.0,
+     "faithfulness": null,
+     "answer_relevancy": null,
+     "correctness_f1": null,
+     "behaviour_passed": null
+    }
+   }
+  },
+  {
+   "id": "q13",
+   "category": "covered",
+   "question": "Necesito cambiar el comportamiento de un método de un componente OWL estándar de Odoo sin copiar su código. ¿Cómo uso `patch` y qué cuidados debo tener?",
+   "expected_agent": "docs",
+   "retrieval": {
+    "es": {
+     "recall@10": 0.6,
+     "rr": 0.5
+    },
+    "en": {
+     "recall@10": 0.6,
+     "rr": 0.5
+    }
+   },
+   "runs": {
+    "agentic": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 15926,
+     "usage": {
+      "input_tokens": 8424,
+      "output_tokens": 1826,
+      "cost_usd": 0.019811
+     },
+     "context_precision": 0.6389,
+     "context_chunks": 7,
+     "citation_correctness": 0.4286,
+     "faithfulness": null,
+     "answer_relevancy": null,
+     "correctness_f1": null,
+     "behaviour_passed": null
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 11038,
+     "usage": {
+      "input_tokens": 4748,
+      "output_tokens": 1358,
+      "cost_usd": 0.023076
+     },
+     "context_precision": 0.6389,
+     "context_chunks": 10,
+     "citation_correctness": 0.5,
+     "faithfulness": 1.0,
+     "answer_relevancy": 0.7348,
+     "correctness_f1": 0.7143,
+     "behaviour_passed": null
+    }
+   }
+  },
+  {
+   "id": "q14",
+   "category": "covered",
+   "question": "¿Cómo marco como traducibles los mensajes de error que lanzo desde Python y cuál es la forma correcta de meter variables dentro del texto?",
+   "expected_agent": "docs",
+   "retrieval": {
+    "es": {
+     "recall@10": 0.6,
+     "rr": 1.0
+    },
+    "en": {
+     "recall@10": 0.6,
+     "rr": 1.0
+    }
+   },
+   "runs": {
+    "agentic": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 15707,
+     "usage": {
+      "input_tokens": 8525,
+      "output_tokens": 2205,
+      "cost_usd": 0.019847
+     },
+     "context_precision": 1.0,
+     "context_chunks": 5,
+     "citation_correctness": 0.6,
+     "faithfulness": 0.9615,
+     "answer_relevancy": 0.6785,
+     "correctness_f1": 0.6429,
+     "behaviour_passed": null
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 8818,
+     "usage": {
+      "input_tokens": 5189,
+      "output_tokens": 1187,
+      "cost_usd": 0.022248
+     },
+     "context_precision": 1.0,
+     "context_chunks": 10,
+     "citation_correctness": 0.5,
+     "faithfulness": 1.0,
+     "answer_relevancy": 0.6588,
+     "correctness_f1": 0.6667,
+     "behaviour_passed": null
+    }
+   }
+  },
+  {
+   "id": "q15",
+   "category": "covered",
+   "question": "¿Cómo hago que cuando el usuario marque una casilla en el formulario se le rellenen solitos otros campos, antes de darle a guardar?",
+   "expected_agent": "docs",
+   "retrieval": {
+    "es": {
+     "recall@10": 0.3333,
+     "rr": 0.5
+    },
+    "en": {
+     "recall@10": 0.3333,
+     "rr": 1.0
+    }
+   },
+   "runs": {
+    "agentic": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 11264,
+     "usage": {
+      "input_tokens": 7891,
+      "output_tokens": 1318,
+      "cost_usd": 0.010703
+     },
+     "context_precision": 1.0,
+     "context_chunks": 1,
+     "citation_correctness": 1.0,
+     "faithfulness": 1.0,
+     "answer_relevancy": 0.5444,
+     "correctness_f1": 0.5217,
+     "behaviour_passed": null
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 7705,
+     "usage": {
+      "input_tokens": 6769,
+      "output_tokens": 1032,
+      "cost_usd": 0.023858
+     },
+     "context_precision": 0.5,
+     "context_chunks": 10,
+     "citation_correctness": 1.0,
+     "faithfulness": 0.9,
+     "answer_relevancy": 0.5624,
+     "correctness_f1": 0.5,
+     "behaviour_passed": null
+    }
+   }
+  },
+  {
+   "id": "q16",
+   "category": "covered",
+   "question": "¿Cómo le pongo un botoncito arriba en el formulario que al darle clic ejecute una función mía de Python?",
+   "expected_agent": "docs",
+   "retrieval": {
+    "es": {
+     "recall@10": 1.0,
+     "rr": 1.0
+    },
+    "en": {
+     "recall@10": 1.0,
+     "rr": 0.3333
+    }
+   },
+   "runs": {
+    "agentic": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 10307,
+     "usage": {
+      "input_tokens": 9046,
+      "output_tokens": 1273,
+      "cost_usd": 0.012383
+     },
+     "context_precision": 1.0,
+     "context_chunks": 3,
+     "citation_correctness": 1.0,
+     "faithfulness": 1.0,
+     "answer_relevancy": 0.6234,
+     "correctness_f1": 0.8,
+     "behaviour_passed": null
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 5926,
+     "usage": {
+      "input_tokens": 7013,
+      "output_tokens": 793,
+      "cost_usd": 0.021956
+     },
+     "context_precision": 0.6679,
+     "context_chunks": 10,
+     "citation_correctness": 0.75,
+     "faithfulness": null,
+     "answer_relevancy": 0.6573,
+     "correctness_f1": null,
+     "behaviour_passed": null
+    }
+   }
+  },
+  {
+   "id": "q17",
+   "category": "covered",
+   "question": "Quiero meterle a mi módulo unos datos de mentira para hacer demos al cliente, pero que no se carguen en la base de producción. ¿Cómo lo hago?",
+   "expected_agent": "docs",
+   "retrieval": {
+    "es": {
+     "recall@10": 0.25,
+     "rr": 0.5
+    },
+    "en": {
+     "recall@10": 0.25,
+     "rr": 1.0
+    }
+   },
+   "runs": {
+    "agentic": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 12684,
+     "usage": {
+      "input_tokens": 6342,
+      "output_tokens": 1580,
+      "cost_usd": 0.013873
+     },
+     "context_precision": 1.0,
+     "context_chunks": 3,
+     "citation_correctness": 0.3333,
+     "faithfulness": 0.9375,
+     "answer_relevancy": 0.6341,
+     "correctness_f1": 0.64,
+     "behaviour_passed": null
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 8244,
+     "usage": {
+      "input_tokens": 3910,
+      "output_tokens": 983,
+      "cost_usd": 0.01765
+     },
+     "context_precision": 0.5,
+     "context_chunks": 10,
+     "citation_correctness": 0.25,
+     "faithfulness": 0.875,
+     "answer_relevancy": 0.6228,
+     "correctness_f1": 0.64,
+     "behaviour_passed": null
+    }
+   }
+  },
+  {
+   "id": "q18",
+   "category": "not_covered",
+   "question": "En hr_payroll, confirmar un lote de nóminas (hr.payslip.run) de 3.000 empleados tarda horas. ¿Cómo paralelizo el cálculo de las nóminas (compute_sheet) en varios workers o con queue_job?",
+   "expected_agent": "research",
+   "retrieval": null,
+   "runs": {
+    "agentic": {
+     "answered_by": "research",
+     "route": "research",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 20303,
+     "usage": {
+      "input_tokens": 7770,
+      "output_tokens": 1066,
+      "cost_usd": 0.023998
+     },
+     "context_precision": null,
+     "context_chunks": 0,
+     "citation_correctness": null,
+     "faithfulness": null,
+     "answer_relevancy": null,
+     "correctness_f1": null,
+     "behaviour_passed": true
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 12746,
+     "usage": {
+      "input_tokens": 4599,
+      "output_tokens": 1590,
+      "cost_usd": 0.025098
+     },
+     "context_precision": null,
+     "context_chunks": 10,
+     "citation_correctness": null,
+     "faithfulness": null,
+     "answer_relevancy": null,
+     "correctness_f1": null,
+     "behaviour_passed": true
+    }
+   }
+  },
+  {
+   "id": "q19",
+   "category": "not_covered",
+   "question": "¿Cómo migro una base de datos Odoo Community de la versión 16 a la 17 con OpenUpgrade, y qué hago con los módulos de la OCA que todavía no tienen scripts de migración?",
+   "expected_agent": "research",
+   "retrieval": null,
+   "runs": {
+    "agentic": {
+     "answered_by": "research",
+     "route": "research",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 28503,
+     "usage": {
+      "input_tokens": 8689,
+      "output_tokens": 1798,
+      "cost_usd": 0.032058
+     },
+     "context_precision": null,
+     "context_chunks": 0,
+     "citation_correctness": null,
+     "faithfulness": null,
+     "answer_relevancy": null,
+     "correctness_f1": null,
+     "behaviour_passed": true
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 12023,
+     "usage": {
+      "input_tokens": 4982,
+      "output_tokens": 1694,
+      "cost_usd": 0.026904
+     },
+     "context_precision": null,
+     "context_chunks": 10,
+     "citation_correctness": null,
+     "faithfulness": null,
+     "answer_relevancy": null,
+     "correctness_f1": null,
+     "behaviour_passed": true
+    }
+   }
+  },
+  {
+   "id": "q20",
+   "category": "not_covered",
+   "question": "¿Qué valores de shared_buffers, work_mem y effective_cache_size de PostgreSQL recomiendan para un Odoo con unos 200 usuarios concurrentes, y conviene poner PgBouncer delante?",
+   "expected_agent": "research",
+   "retrieval": null,
+   "runs": {
+    "agentic": {
+     "answered_by": "research",
+     "route": "research",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 38573,
+     "usage": {
+      "input_tokens": 10227,
+      "output_tokens": 1827,
+      "cost_usd": 0.0364
+     },
+     "context_precision": null,
+     "context_chunks": 0,
+     "citation_correctness": null,
+     "faithfulness": null,
+     "answer_relevancy": null,
+     "correctness_f1": null,
+     "behaviour_passed": true
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 8319,
+     "usage": {
+      "input_tokens": 5815,
+      "output_tokens": 862,
+      "cost_usd": 0.02025
+     },
+     "context_precision": null,
+     "context_chunks": 10,
+     "citation_correctness": null,
+     "faithfulness": null,
+     "answer_relevancy": null,
+     "correctness_f1": null,
+     "behaviour_passed": true
+    }
+   }
+  },
+  {
+   "id": "q21",
+   "category": "not_covered",
+   "question": "Corregí el costo de una recepción ya validada; ¿cómo recalculo las capas de valoración FIFO (stock.valuation.layer) de los productos afectados?",
+   "expected_agent": "research",
+   "retrieval": null,
+   "runs": {
+    "agentic": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 1,
+     "latency_ms": 20248,
+     "usage": {
+      "input_tokens": 12118,
+      "output_tokens": 2463,
+      "cost_usd": 0.016239
+     },
+     "context_precision": null,
+     "context_chunks": 2,
+     "citation_correctness": null,
+     "faithfulness": null,
+     "answer_relevancy": null,
+     "correctness_f1": null,
+     "behaviour_passed": true
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 5606,
+     "usage": {
+      "input_tokens": 3020,
+      "output_tokens": 559,
+      "cost_usd": 0.01163
+     },
+     "context_precision": null,
+     "context_chunks": 10,
+     "citation_correctness": null,
+     "faithfulness": null,
+     "answer_relevancy": null,
+     "correctness_f1": null,
+     "behaviour_passed": true
+    }
+   }
+  },
+  {
+   "id": "q22",
+   "category": "not_covered",
+   "question": "¿Cómo configuro un modelo de conciliación bancaria (account.reconcile.model) para que case automáticamente los pagos con las facturas usando la referencia del extracto?",
+   "expected_agent": "research",
+   "retrieval": null,
+   "runs": {
+    "agentic": {
+     "answered_by": "research",
+     "route": "docs",
+     "delegated": true,
+     "n_rewrites": 2,
+     "latency_ms": 47994,
+     "usage": {
+      "input_tokens": 24260,
+      "output_tokens": 3257,
+      "cost_usd": 0.028515
+     },
+     "context_precision": null,
+     "context_chunks": 0,
+     "citation_correctness": null,
+     "faithfulness": null,
+     "answer_relevancy": null,
+     "correctness_f1": null,
+     "behaviour_passed": true
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 4759,
+     "usage": {
+      "input_tokens": 4642,
+      "output_tokens": 483,
+      "cost_usd": 0.014114
+     },
+     "context_precision": null,
+     "context_chunks": 10,
+     "citation_correctness": null,
+     "faithfulness": null,
+     "answer_relevancy": null,
+     "correctness_f1": null,
+     "behaviour_passed": true
+    }
+   }
+  },
+  {
+   "id": "q23",
+   "category": "not_covered",
+   "question": "Cuando se cae internet en una tienda, ¿cómo sincroniza el Punto de Venta los pedidos hechos sin conexión y dónde los guarda mientras tanto?",
+   "expected_agent": "research",
+   "retrieval": null,
+   "runs": {
+    "agentic": {
+     "answered_by": "research",
+     "route": "docs",
+     "delegated": true,
+     "n_rewrites": 2,
+     "latency_ms": 61575,
+     "usage": {
+      "input_tokens": 23400,
+      "output_tokens": 3370,
+      "cost_usd": 0.031744
+     },
+     "context_precision": null,
+     "context_chunks": 0,
+     "citation_correctness": null,
+     "faithfulness": null,
+     "answer_relevancy": null,
+     "correctness_f1": null,
+     "behaviour_passed": true
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 5042,
+     "usage": {
+      "input_tokens": 4416,
+      "output_tokens": 405,
+      "cost_usd": 0.012882
+     },
+     "context_precision": null,
+     "context_chunks": 10,
+     "citation_correctness": null,
+     "faithfulness": null,
+     "answer_relevancy": null,
+     "correctness_f1": null,
+     "behaviour_passed": true
+    }
+   }
+  },
+  {
+   "id": "q24",
+   "category": "out_of_scope",
+   "question": "Hola, buenos días. ¿Qué puedes hacer?",
+   "expected_agent": "direct",
+   "retrieval": null,
+   "runs": {
+    "agentic": {
+     "answered_by": "direct",
+     "route": "direct",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 2467,
+     "usage": {
+      "input_tokens": 936,
+      "output_tokens": 163,
+      "cost_usd": 0.000175
+     },
+     "context_precision": null,
+     "context_chunks": 0,
+     "citation_correctness": null,
+     "faithfulness": null,
+     "answer_relevancy": null,
+     "correctness_f1": null,
+     "behaviour_passed": true
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 7438,
+     "usage": {
+      "input_tokens": 3701,
+      "output_tokens": 829,
+      "cost_usd": 0.015692
+     },
+     "context_precision": null,
+     "context_chunks": 10,
+     "citation_correctness": null,
+     "faithfulness": null,
+     "answer_relevancy": null,
+     "correctness_f1": null,
+     "behaviour_passed": false
+    }
+   }
+  },
+  {
+   "id": "q25",
+   "category": "out_of_scope",
+   "question": "¿Va a llover mañana en Bogotá?",
+   "expected_agent": "direct",
+   "retrieval": null,
+   "runs": {
+    "agentic": {
+     "answered_by": "direct",
+     "route": "direct",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 2022,
+     "usage": {
+      "input_tokens": 926,
+      "output_tokens": 147,
+      "cost_usd": 0.000166
+     },
+     "context_precision": null,
+     "context_chunks": 0,
+     "citation_correctness": null,
+     "faithfulness": null,
+     "answer_relevancy": null,
+     "correctness_f1": null,
+     "behaviour_passed": true
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 2595,
+     "usage": {
+      "input_tokens": 3739,
+      "output_tokens": 241,
+      "cost_usd": 0.009888
+     },
+     "context_precision": null,
+     "context_chunks": 10,
+     "citation_correctness": null,
+     "faithfulness": null,
+     "answer_relevancy": null,
+     "correctness_f1": null,
+     "behaviour_passed": true
+    }
+   }
+  },
+  {
+   "id": "q26",
+   "category": "out_of_scope",
+   "question": "Dame una receta fácil de ajiaco santafereño.",
+   "expected_agent": "direct",
+   "retrieval": null,
+   "runs": {
+    "agentic": {
+     "answered_by": "direct",
+     "route": "direct",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 3233,
+     "usage": {
+      "input_tokens": 932,
+      "output_tokens": 168,
+      "cost_usd": 0.000177
+     },
+     "context_precision": null,
+     "context_chunks": 0,
+     "citation_correctness": null,
+     "faithfulness": null,
+     "answer_relevancy": null,
+     "correctness_f1": null,
+     "behaviour_passed": true
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 3570,
+     "usage": {
+      "input_tokens": 4975,
+      "output_tokens": 322,
+      "cost_usd": 0.01317
+     },
+     "context_precision": null,
+     "context_chunks": 10,
+     "citation_correctness": null,
+     "faithfulness": null,
+     "answer_relevancy": null,
+     "correctness_f1": null,
+     "behaviour_passed": true
+    }
+   }
+  },
+  {
+   "id": "q27",
+   "category": "out_of_scope",
+   "question": "¿Cómo invierto una cadena de texto en Python?",
+   "expected_agent": "direct",
+   "retrieval": null,
+   "runs": {
+    "agentic": {
+     "answered_by": "direct",
+     "route": "direct",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 2356,
+     "usage": {
+      "input_tokens": 932,
+      "output_tokens": 157,
+      "cost_usd": 0.000172
+     },
+     "context_precision": null,
+     "context_chunks": 0,
+     "citation_correctness": null,
+     "faithfulness": null,
+     "answer_relevancy": null,
+     "correctness_f1": null,
+     "behaviour_passed": true
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 4134,
+     "usage": {
+      "input_tokens": 5230,
+      "output_tokens": 428,
+      "cost_usd": 0.01474
+     },
+     "context_precision": null,
+     "context_chunks": 10,
+     "citation_correctness": null,
+     "faithfulness": null,
+     "answer_relevancy": null,
+     "correctness_f1": null,
+     "behaviour_passed": true
+    }
+   }
+  },
+  {
+   "id": "q28",
+   "category": "follow_up",
+   "question": "En mi modelo de propiedades quiero guardar el comprador, que es un res.partner. ¿Qué tipo de campo uso?",
+   "expected_agent": "docs",
+   "retrieval": {
+    "es": {
+     "recall@10": 0.5,
+     "rr": 1.0
+    },
+    "en": {
+     "recall@10": 0.5,
+     "rr": 1.0
+    }
+   },
+   "runs": {
+    "agentic": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 10103,
+     "usage": {
+      "input_tokens": 7729,
+      "output_tokens": 1136,
+      "cost_usd": 0.010136
+     },
+     "context_precision": 1.0,
+     "context_chunks": 2,
+     "citation_correctness": 1.0,
+     "faithfulness": 0.9375,
+     "answer_relevancy": 0.6178,
+     "correctness_f1": 0.5,
+     "behaviour_passed": null
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 6183,
+     "usage": {
+      "input_tokens": 5883,
+      "output_tokens": 558,
+      "cost_usd": 0.017346
+     },
+     "context_precision": 1.0,
+     "context_chunks": 10,
+     "citation_correctness": 0.6667,
+     "faithfulness": 0.9333,
+     "answer_relevancy": 0.3795,
+     "correctness_f1": 0.6316,
+     "behaviour_passed": null
+    }
+   }
+  },
+  {
+   "id": "q29",
+   "category": "follow_up",
+   "question": "¿Y cómo hago lo contrario, ver desde el partner todas las propiedades que tienen ese campo apuntando a él?",
+   "expected_agent": "docs",
+   "retrieval": null,
+   "runs": {
+    "agentic": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 12526,
+     "usage": {
+      "input_tokens": 10758,
+      "output_tokens": 1396,
+      "cost_usd": 0.015311
+     },
+     "context_precision": 0.4778,
+     "context_chunks": 5,
+     "citation_correctness": 1.0,
+     "faithfulness": 1.0,
+     "answer_relevancy": 0.5935,
+     "correctness_f1": 0.7,
+     "behaviour_passed": null
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 8316,
+     "usage": {
+      "input_tokens": 5929,
+      "output_tokens": 1002,
+      "cost_usd": 0.021878
+     },
+     "context_precision": 0.2429,
+     "context_chunks": 10,
+     "citation_correctness": 0.5,
+     "faithfulness": 0.9167,
+     "answer_relevancy": 0.6087,
+     "correctness_f1": 0.5833,
+     "behaviour_passed": null
+    }
+   }
+  },
+  {
+   "id": "q30",
+   "category": "follow_up",
+   "question": "Desde un componente OWL del cliente web, ¿cómo llamo a un método de un modelo Python?",
+   "expected_agent": "docs",
+   "retrieval": {
+    "es": {
+     "recall@10": 0.25,
+     "rr": 0.3333
+    },
+    "en": {
+     "recall@10": 0.25,
+     "rr": 0.5
+    }
+   },
+   "runs": {
+    "agentic": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 7998,
+     "usage": {
+      "input_tokens": 6708,
+      "output_tokens": 935,
+      "cost_usd": 0.005858
+     },
+     "context_precision": 1.0,
+     "context_chunks": 1,
+     "citation_correctness": 1.0,
+     "faithfulness": 1.0,
+     "answer_relevancy": 0.4499,
+     "correctness_f1": 0.6667,
+     "behaviour_passed": null
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 4954,
+     "usage": {
+      "input_tokens": 5233,
+      "output_tokens": 466,
+      "cost_usd": 0.015126
+     },
+     "context_precision": 0.3333,
+     "context_chunks": 10,
+     "citation_correctness": 0.3333,
+     "faithfulness": 0.8889,
+     "answer_relevancy": 0.6994,
+     "correctness_f1": 0.5714,
+     "behaviour_passed": null
+    }
+   }
+  },
+  {
+   "id": "q31",
+   "category": "follow_up",
+   "question": "¿Y si quiero crear uno de esos pero propio, cómo lo defino y lo registro para que el cliente web lo arranque?",
+   "expected_agent": "docs",
+   "retrieval": null,
+   "runs": {
+    "agentic": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 14772,
+     "usage": {
+      "input_tokens": 7310,
+      "output_tokens": 1635,
+      "cost_usd": 0.013577
+     },
+     "context_precision": 0.5,
+     "context_chunks": 3,
+     "citation_correctness": 0.3333,
+     "faithfulness": null,
+     "answer_relevancy": null,
+     "correctness_f1": null,
+     "behaviour_passed": null
+    },
+    "linear": {
+     "answered_by": "docs",
+     "route": "docs",
+     "delegated": false,
+     "n_rewrites": 0,
+     "latency_ms": 8922,
+     "usage": {
+      "input_tokens": 5190,
+      "output_tokens": 1131,
+      "cost_usd": 0.02169
+     },
+     "context_precision": 0.0,
+     "context_chunks": 10,
+     "citation_correctness": 0.0,
+     "faithfulness": null,
+     "answer_relevancy": null,
+     "correctness_f1": null,
+     "behaviour_passed": null
+    }
+   }
+  }
+ ]
+}
