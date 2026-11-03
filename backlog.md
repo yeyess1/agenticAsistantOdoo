@@ -300,7 +300,7 @@ Plantilla — copiar por cada decisión:
 - Notas técnicas: modelos 5.5 → no `budget_tokens`, no forced `tool_choice` (`any`/`tool` → 400; usar `auto` + `strict: true` o structured outputs), no prefill. Controlar profundidad con `effort` (router/grader en `low`). Anthropic no ofrece embeddings → D-04.
 - Impacto en retos opcionales: E reporta tokens/costo por modelo y nodo.
 - Tareas afectadas: S-02, R-02, R-03, R-04, X-01, E-03, E-05, F-02 (`.env.example`).
-- Actualización 2026-11-03: proveedor configurable con `LLM_PROVIDER` (`anthropic` por defecto o `google`). Motivo: la organización de Anthropic se quedó sin saldo y Gemini tiene tier gratis. Roles en Gemini: `gemini-3.5-flash-lite` (tareas cortas, $0.30/$2.50 por MTok), `gemini-3.8-flash` (generator y research, $0.75/$3.75 hasta 2026-12-31 y $1.50/$7.50 desde 2027-01-01) y `gemini-3.1-pro-preview` (juez, $2/$12, sin tier gratis). `effort` pasa a `reasoning_effort`. Verificado en V-q (ARCHITECTURE §16).
+- Actualización 2026-11-03: proveedor configurable con `LLM_PROVIDER` (`anthropic` por defecto o `google`). Motivo: la organización de Anthropic se quedó sin saldo y Gemini tiene tier gratis. Roles en Gemini: `gemini-3.5-flash-lite` (tareas cortas, $0.30/$2.50 por MTok), `gemini-3.8-flash` (generator y research, $0.75/$3.75 hasta 2026-12-31 y $1.50/$7.50 desde 2027-01-01) y `gemini-3.6-flash` (juez, mismos precios que 3.8 Flash, con tier gratis y distinto del generator para evitar autoevaluación; se descartó `gemini-3.1-pro-preview`, $2/$12, porque no tiene tier gratis). `effort` pasa a `reasoning_effort`. Verificado en V-q (ARCHITECTURE §16).
 
 ### D-04 — Modelo de embeddings
 - Fecha: 2026-11-02
@@ -602,7 +602,8 @@ Entradas cronológicas (más reciente arriba). Plantilla:
   - Las keys de Anthropic probadas autenticaban (`GET /v1/models` 200) pero `/v1/messages` respondía «credit balance is too low»: el saldo es de la organización, no de la key.
   - Los `gemini-2.5-*` siguen en el listado de modelos de la key pero devuelven 404. `gemini-3.5-flash` responde pero no aparece en la página de precios: se usa `gemini-3.8-flash`.
 - **Decisiones y desviaciones:** actualización de D-03 (proveedor configurable). Anthropic sigue siendo el default del código; el `.env` local usa Gemini.
-- **Próximos pasos:** correr el eval con Gemini (concurrencia baja por los límites del tier gratis); decidir si el juez sigue en `gemini-3.1-pro-preview` (de pago) o pasa a `gemini-3.6-flash` (gratis); actualizar el precio de `gemini-3.8-flash` el 2027-01-01.
+- **Próximos pasos:** correr el eval con Gemini (concurrencia baja por los límites del tier gratis); actualizar los precios de `gemini-3.8-flash` y `gemini-3.6-flash` el 2027-01-01.
+- **Actualización:** el juez pasa a `gemini-3.6-flash` (gratis, distinto del generator), probado con structured output.
 
 ### 2026-11-03 — Fase 4: Evaluación
 - **Hecho:**

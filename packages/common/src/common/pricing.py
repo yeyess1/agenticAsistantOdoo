@@ -3,7 +3,8 @@
 Gemini: paid tier, standard (non-batch), prompts <= 200k tokens, output includes thinking
 tokens; source https://aistudio.google.com/docs/pricing (checked 2026-11-03). The free tier
 costs 0, so these values are what the same traffic would cost on the paid tier.
-gemini-3.8-flash doubles from 2027-01-01 (input 1.50, output 7.50): update it then.
+gemini-3.8-flash and gemini-3.6-flash double from 2027-01-01 (input 1.50, output 7.50):
+update them then.
 """
 
 from __future__ import annotations
@@ -23,6 +24,7 @@ PRICES: dict[str, ModelPrice] = {
     "claude-opus-5-5": ModelPrice(4.0, 20.0),
     "gemini-3.5-flash-lite": ModelPrice(0.30, 2.50),
     "gemini-3.8-flash": ModelPrice(0.75, 3.75),
+    "gemini-3.6-flash": ModelPrice(0.75, 3.75),
     "gemini-3.1-pro-preview": ModelPrice(2.0, 12.0),
 }
 
