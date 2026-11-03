@@ -3,6 +3,27 @@
 Asistente agéntico de conocimiento para desarrolladores (RAG orquestado como grafo de agentes).
 
 
+## Estado actual (handoff entre sesiones)
+
+> Actualizado 2026-11-02. Leer esto primero al retomar una sesión nueva.
+
+- **Fase de decisiones:** cerrada (D-01…D-14). Diseño en `docs/ARCHITECTURE.md`, aprobado.
+- **Fase 0 (Fundación):** código escrito por el agente implementador (Sonnet), 12 commits locales en `main` sin remoto. En verde en local: `ruff`, `mypy` y `pytest` (18 tests); `docker compose config` OK.
+  - ✅ Hechas: F-01…F-04, F-06, A-08, A-09.
+  - 🔄 Escritas sin verificar: F-05 (gitleaks), F-07 (CI), C-01 (Dockerfiles), C-04 (bootstrap init), C-05 (healthchecks), C-07 (additional_contexts), V-05 (migración 001).
+- **Bloqueo de la sesión anterior:** el usuario no estaba en el grupo `docker` (`docker ps` daba permission denied). Solución: `sudo usermod -aG docker $USER` y volver a iniciar sesión.
+- **Siguiente paso (cerrar Fase 0):**
+  1. `docker ps` sin sudo debe funcionar.
+  2. `make up`: postgres, qdrant y embeddings en healthy; `docker compose logs init` termina en «bootstrap done» y el contenedor sale con 0.
+  3. `docker compose exec postgres psql -U odoo_rag -c '\dt'`: `documents` + tablas `checkpoint*`.
+  4. `curl -s localhost:6333/collections/odoo19_dev | jq '.result.payload_schema'`: vectores dense 1024 + sparse y 5 payload indexes.
+  5. `docker compose build init agent ingestion`.
+  6. gitleaks (`gitleaks dir .` y `gitleaks git .` con `-c .gitleaks.toml`) y `uv run pre-commit run --all-files`.
+  7. Pasar las tareas 🔄 a ✅ y registrar el resultado en la bitácora.
+- **Riesgos al correr `make up`:** los healthchecks de Qdrant y TEI usan `bash` sobre `/dev/tcp` y fallan si la imagen no trae `bash` (V-e); la primera descarga del modelo en TEI tarda (`start_period` de 300 s); el soporte de Qwen3 en TEI `cpu-1.8.3` no está probado; `docker compose wait init` no se ha probado.
+- **Después:** Fase 1 (ingesta + vector), ejecutada por el agente implementador con Sonnet, una fase por vez.
+- **Entorno:** RTX 4060 Laptop de 8 GB, sin NVIDIA Container Toolkit (TEI en CPU por defecto); uv 0.13.6, Compose 2.40, Node 22. La CI requiere subir el repo a GitHub: el usuario dará la URL.
+
 ## Leyenda
 
 **Estado:** `⬜ Por hacer` · `🔄 En curso` · `✅ Hecho` · `⏸️ Bloqueado` · `❌ Descartado`
