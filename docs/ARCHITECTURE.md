@@ -12,7 +12,7 @@
 | Sistema | Asistente de conocimiento para desarrolladores: un RAG orquestado como grafo de agentes en LangGraph, con un supervisor, un subagente de documentación y un subagente de investigación (D-02). |
 | Caso de uso | Documentación **Odoo 19 Developer** (en inglés, unas 60 páginas y 1 PDF, CC BY-SA 4.0) (D-11). Las consultas llegan en **español** y la respuesta final sale siempre en español (R-07). |
 | Fuera de la documentación | Se busca solo en **Odoo Forum** (`odoo.com/forum`), usando `ddgs` con `site:` y leyendo posts individuales (D-07). |
-| LLM | Anthropic: `claude-haiku-5-5` (tareas cortas), `claude-sonnet-5-5` (síntesis y tools) y `claude-opus-5-5` (juez de evaluación) (D-03). |
+| LLM | Proveedor configurable con `LLM_PROVIDER` (D-03). Por defecto Anthropic: `claude-haiku-5-5` (tareas cortas), `claude-sonnet-5-5` (síntesis y tools) y `claude-opus-5-5` (juez de evaluación). Alternativa Gemini (`google`): `gemini-3.5-flash-lite`, `gemini-3.8-flash` y `gemini-3.1-pro-preview` en los mismos roles. |
 | Embeddings | `Qwen/Qwen3-Embedding-0.6B` servido con TEI, 1024 dimensiones (D-04). |
 | Vector DB | Qdrant con HNSW (m=16, ef_construct=200, hnsw_ef=128) y payload indexes (D-05). |
 | Persistencia | Postgres: checkpointer `AsyncPostgresSaver` y tabla `documents` (D-08). |
@@ -49,7 +49,7 @@ flowchart LR
   end
 
   subgraph ext["Dependencias externas"]
-    anthropic["Anthropic API"]
+    anthropic["LLM API<br/>Anthropic o Gemini"]
     ddg["DuckDuckGo vía ddgs"]
     forum["odoo.com/forum (posts)"]
     odocs["odoo.com/documentation/19.0"]
@@ -84,7 +84,7 @@ flowchart LR
 
 **Flujos:**
 - **Escritura (ingesta):** archivo → `ingestion` → parse/normalize → chunk → TEI → Qdrant `upsert` y fila en `documents` (§7).
-- **Lectura (consulta):** `frontend` → `agent` → grafo (§3), que usa TEI y Qdrant para recuperar, Anthropic para los LLM, ddgs/foro para investigar y Postgres para la memoria.
+- **Lectura (consulta):** `frontend` → `agent` → grafo (§3), que usa TEI y Qdrant para recuperar, Anthropic o Gemini (según `LLM_PROVIDER`) para los LLM, ddgs/foro para investigar y Postgres para la memoria.
 - El `eval` runner y el cliente MCP son clientes de las APIs, no tienen acceso directo a los datastores (D-10, D-13). Cómo se ejecutan se describe en §11 y §13 **[Aprobado 2026-11-02]**.
 
 ---
@@ -124,6 +124,8 @@ flowchart TD
   direct --> END_N
 ```
 
+Los modelos del diagrama y de la tabla son los defaults de Anthropic. Con `LLM_PROVIDER=google`, cada rol Haiku pasa a `gemini-3.5-flash-lite` y cada rol Sonnet a `gemini-3.8-flash` (§9).
+
 | Nodo | Modelo / recurso | Salida |
 |---|---|---|
 | `contextualize` | Haiku 5.5. Si el thread no tiene historial, es pass-through **[Aprobado 2026-11-02]** | `standalone_question` |
@@ -152,7 +154,7 @@ sequenceDiagram
   participant P as Postgres
   participant T as TEI
   participant Q as Qdrant
-  participant L as Anthropic
+  participant L as LLM (Anthropic o Gemini)
   U->>F: pregunta + thread_id
   F->>A: POST /api/agent/query (proxy a /query)
   A->>G: astream_events(input, config thread_id + callbacks)
@@ -498,7 +500,10 @@ class SearchProvider(Protocol):       # packages/common (A-08)
 
 | Variable | Default | Secreto | Notas |
 |---|---|---|---|
-| `ANTHROPIC_API_KEY` | — | **Sí** | única key obligatoria |
+| `LLM_PROVIDER` | `anthropic` | | `anthropic` o `google` (Gemini API). Los `LLM_MODEL_*` deben ser de ese proveedor |
+| `ANTHROPIC_API_KEY` | — | **Sí** | obligatoria si `LLM_PROVIDER=anthropic` |
+| `ANTHROPIC_WORKSPACE_ID` | — | | solo para keys de organización sin workspace (header `anthropic-workspace-id`) |
+| `GOOGLE_API_KEY` | — | **Sí** | key de Google AI Studio, obligatoria si `LLM_PROVIDER=google` |
 | `LLM_MODEL_CONTEXTUALIZER` | `claude-haiku-5-5` | | D-03 |
 | `LLM_MODEL_ROUTER` | `claude-haiku-5-5` | | effort `low` |
 | `LLM_MODEL_GRADER` | `claude-haiku-5-5` | | effort `low` |
@@ -507,7 +512,9 @@ class SearchProvider(Protocol):       # packages/common (A-08)
 | `LLM_MODEL_GENERATOR` | `claude-sonnet-5-5` | | |
 | `LLM_MODEL_RESEARCH` | `claude-sonnet-5-5` | | |
 | `LLM_MODEL_JUDGE` | `claude-opus-5-5` | | solo eval (D-12) |
-| `LLM_EFFORT_ROUTER`, `LLM_EFFORT_GRADER` | `low` | | D-03 |
+| `LLM_EFFORT_ROUTER`, `LLM_EFFORT_GRADER` | `low` | | D-03. Con Gemini se envía como `reasoning_effort` (`minimal`, `low`, `medium`, `high`) |
+
+Con `LLM_PROVIDER=google`, `.env.example` trae comentados los modelos Gemini de cada rol.
 | `EMBEDDINGS_URL` | `http://embeddings:80` | | TEI |
 | `EMBEDDINGS_MODEL` / `EMBEDDINGS_DIM` | `Qwen/Qwen3-Embedding-0.6B` / `1024` | | |
 | `EMBEDDINGS_QUERY_INSTRUCTION` | instrucción de recuperación | | solo para consultas |
@@ -779,6 +786,7 @@ GAP de diseño (no viene de la prueba): el backlog no define cómo `make eval` a
 | V-n | Copia del frontend base: excluir `.env`, `.git`, `.vercel` y toda marca BBVA | D-09 | Checklist en U-04 + gitleaks. |
 | V-o | `docker compose down -v` destruye el índice y la memoria | D-10 | Solo documentado. Nunca en el Makefile por defecto. |
 | V-p | Formato exacto de la instrucción de consulta de Qwen3 en TEI (si se aplica mal, degrada 1–5 %) | D-04 | **[Resuelto 2026-11-02]** `format_query` produce `Instruct: {task}\nQuery: {q}` y los documentos van sin instrucción (`test_embedder.py`). Verificado con `/search` real: consultas en español devuelven las secciones esperadas. |
+| V-q | `langchain-google-genai` con Gemini: structured output `json_schema`, `reasoning_effort`, streaming y tool calling en el loop de research | D-03 | **[Resuelto 2026-11-03]** `langchain-google-genai` 4.4.2: los cuatro funcionan con `gemini-3.5-flash-lite`, `gemini-3.8-flash` y `gemini-3.1-pro-preview`; el loop de research encadena 3 tool calls sin errores de thought signature. Los `gemini-2.5-*` devuelven 404. `gemini-3.1-pro-preview` no tiene tier gratis. |
 
 ---
 
