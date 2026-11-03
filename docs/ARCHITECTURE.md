@@ -299,7 +299,7 @@ ScoredChunk    { chunk_id, doc_id, score, text, title, section, url, anchor, pag
 
 ```text
 IngestResult { doc_id, name, source, status, n_chunks, content_hash,
-               action: "created" | "updated" | "unchanged",   # "unchanged" solo con reto F
+               action: "created" | "updated" | "unchanged",   # "unchanged": mismo content_hash y modelo (adelanto mínimo del reto F)
                took_ms }
 DocumentOut  { doc_id, name, source, mime_type, content_hash, embedding_model,
                n_chunks, status, created_at, updated_at, ingested_at }
@@ -766,16 +766,16 @@ GAP de diseño (no viene de la prueba): el backlog no define cómo `make eval` a
 | V-d | Soporte de metadatos de colección en Qdrant para guardar modelo y dimensión | D-04 | Verificar. Si no existe, guardarlos en Postgres. |
 | V-e | ¿Las imágenes `qdrant/qdrant` y TEI traen `curl`/`wget` para el healthcheck? | C-05 | Verificar. Alternativas: `bash /dev/tcp` o un sidecar de healthcheck. |
 | V-f | Compose ≥ 2.17 para `additional_contexts` | C-07 | Verificar la versión y documentarla como prerequisito en el README. |
-| V-g | Calidad de `pymupdf4llm` sobre el PDF generado (encabezados, código, página) | D-06, I-10 | Inspeccionar la salida. Ajustar el render de Chromium si se pierden encabezados. |
-| V-h | ¿El HTML scrapeado conserva la jerarquía H1–H3, las anclas y el lenguaje del código? | D-06 | Validar en I-08 con `orm.html` y `view_architectures.html`. |
-| V-i | Calibración 512/64 con las secciones reales | D-06 | I-12. |
+| V-g | Calidad de `pymupdf4llm` sobre el PDF generado (encabezados, código, página) | D-06, I-10 | **[Resuelto 2026-11-02]** Con `pymupdf4llm` 2.1 (`page_chunks=True`, `use_ocr=False`) se conservan los encabezados H1–H3, los bloques de código cercados y el número de página (`metadata.page_number`; el parser lo convierte en marcadores `<!-- page:N -->`). Defectos conocidos y tratados en el parser: títulos en negrita (`### **X**` → `### X`), glifos de la zona de uso privado, `~~` espurio. Defecto no resuelto: en algunos bloques de código se pierden espacios (`fromodooimport`), problema de la extracción sobre el PDF de Skia; `pymupdf.get_text()` simple sí los conserva. Impacto bajo (un PDF, 29 páginas). |
+| V-h | ¿El HTML scrapeado conserva la jerarquía H1–H3, las anclas y el lenguaje del código? | D-06 | **[Resuelto 2026-11-02]** Sí. `orm.html` y `view_architectures.html` conservan H1–H3 con su `{#ancla}`, los bloques con su lenguaje (`highlight-<lang>`; `default` → `xml` si empieza por `<`, si no `python`) y las firmas de autodoc (`<dt id>`) como H4 con ancla propia, para que las entradas profundas de la referencia sean citables. |
+| V-i | Calibración 512/64 con las secciones reales | D-06 | **[Resuelto 2026-11-02]** Se mantiene 512/64. Ver la tabla de calibración en la bitácora de la Fase 1 y `python -m ingestion.calibrate`. |
 | V-j | Tags de TEI (CPU y GPU Ada `89-*`) con soporte de Qwen3-Embedding | D-04, D-10 | Verificar y fijar los tags. |
 | V-k | `langchain-anthropic` con modelos 5.5: structured output sin forced `tool_choice` ni prefill, y parámetro `effort` | D-03 | Prueba temprana en la Fase 2. |
 | V-l | Despliegue de Langfuse (profile «por decidir»: el self-host trae dependencias propias) | D-10 | Decidir al empezar O-E. |
 | V-m | Costo real del juez Opus (unas 30 preguntas × 2 modos) | D-12 | Medir en la primera corrida. |
 | V-n | Copia del frontend base: excluir `.env`, `.git`, `.vercel` y toda marca BBVA | D-09 | Checklist en U-04 + gitleaks. |
 | V-o | `docker compose down -v` destruye el índice y la memoria | D-10 | Solo documentado. Nunca en el Makefile por defecto. |
-| V-p | Formato exacto de la instrucción de consulta de Qwen3 en TEI (si se aplica mal, degrada 1–5 %) | D-04 | Test unitario del `Embedder` y verificación con `/search`. |
+| V-p | Formato exacto de la instrucción de consulta de Qwen3 en TEI (si se aplica mal, degrada 1–5 %) | D-04 | **[Resuelto 2026-11-02]** `format_query` produce `Instruct: {task}\nQuery: {q}` y los documentos van sin instrucción (`test_embedder.py`). Verificado con `/search` real: consultas en español devuelven las secciones esperadas. |
 
 ---
 

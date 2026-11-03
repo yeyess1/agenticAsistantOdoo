@@ -5,24 +5,18 @@ Asistente agéntico de conocimiento para desarrolladores (RAG orquestado como gr
 
 ## Estado actual (handoff entre sesiones)
 
-> Actualizado 2026-11-02. Leer esto primero al retomar una sesión nueva.
+> Actualizado 2026-11-02 (noche, tras la Fase 1). Leer esto primero al retomar una sesión nueva.
 
 - **Fase de decisiones:** cerrada (D-01…D-14). Diseño en `docs/ARCHITECTURE.md`, aprobado.
-- **Fase 0 (Fundación):** código escrito por el agente implementador (Sonnet), 12 commits locales en `main` sin remoto. En verde en local: `ruff`, `mypy` y `pytest` (18 tests); `docker compose config` OK.
-  - ✅ Hechas: F-01…F-04, F-06, A-08, A-09.
-  - 🔄 Escritas sin verificar: F-05 (gitleaks), F-07 (CI), C-01 (Dockerfiles), C-04 (bootstrap init), C-05 (healthchecks), C-07 (additional_contexts), V-05 (migración 001).
-- **Bloqueo de la sesión anterior:** el usuario no estaba en el grupo `docker` (`docker ps` daba permission denied). Solución: `sudo usermod -aG docker $USER` y volver a iniciar sesión.
-- **Siguiente paso (cerrar Fase 0):**
-  1. `docker ps` sin sudo debe funcionar.
-  2. `make up`: postgres, qdrant y embeddings en healthy; `docker compose logs init` termina en «bootstrap done» y el contenedor sale con 0.
-  3. `docker compose exec postgres psql -U odoo_rag -c '\dt'`: `documents` + tablas `checkpoint*`.
-  4. `curl -s localhost:6333/collections/odoo19_dev | jq '.result.payload_schema'`: vectores dense 1024 + sparse y 5 payload indexes.
-  5. `docker compose build init agent ingestion`.
-  6. gitleaks (`gitleaks dir .` y `gitleaks git .` con `-c .gitleaks.toml`) y `uv run pre-commit run --all-files`.
-  7. Pasar las tareas 🔄 a ✅ y registrar el resultado en la bitácora.
-- **Riesgos al correr `make up`:** los healthchecks de Qdrant y TEI usan `bash` sobre `/dev/tcp` y fallan si la imagen no trae `bash` (V-e); la primera descarga del modelo en TEI tarda (`start_period` de 300 s); el soporte de Qwen3 en TEI `cpu-1.8.3` no está probado; `docker compose wait init` no se ha probado.
-- **Después:** Fase 1 (ingesta + vector), ejecutada por el agente implementador con Sonnet, una fase por vez.
-- **Entorno:** RTX 4060 Laptop de 8 GB, sin NVIDIA Container Toolkit (TEI en CPU por defecto); uv 0.13.6, Compose 2.40, Node 22. La CI requiere subir el repo a GitHub: el usuario dará la URL.
+- **Fase 0 (Fundación):** cerrada. Única abierta: F-07 (CI), necesita la URL del repo en GitHub.
+- **Fase 1 (Ingesta + vector):** hecha y verificada con el stack real. `make up` levanta también `ingestion` (:8001) y `agent` (:8000, solo `/search` y `/health`), ambos en healthy. `make seed` indexó 59 archivos (58 MD + 1 PDF) = 832 puntos en Qdrant = 59 filas `indexed` en Postgres. Re-seed idempotente (59 unchanged, 6 s). ruff, mypy, pytest (60) y pre-commit en verde.
+  - ✅ Hechas: I-01…I-12, V-01…V-03, A-07. ⬜ V-04 queda para la Fase 4.
+- **Cambios sin commitear:** todo el trabajo de las Fases 0 (fixes) y 1 está en el árbol de trabajo. Se borró `scripts/.gitkeep` (ya hay `make_pdf.sh`). El corpus (`data/corpus/odoo19-dev`, ~1,1 MB + PDF 1,3 MB) debe ir en un commit propio.
+- **Ojo:** el seed completo tarda ~36 min con TEI en CPU (~2,6 s por chunk). Re-ejecutarlo con `FORCE=1` repite esa espera. `/search` responde en ~0,3 s.
+- **Nota de entorno:** comandos Docker con `sg docker -c "..."` solo si la sesión arrancó antes de entrar al grupo `docker`. Sin `docker buildx`; `docker compose build` funciona. `frontend/.next/` y `node_modules/` quedan excluidos en `.gitleaks.toml`.
+- **Frontend (adelantado):** U-04 hecho (copia limpia + paleta morado tipo Odoo `#714B67`). Golden set (E-01) en redacción en `eval/golden/golden_set.yaml`.
+- **Siguiente paso:** Fase 2 (grafo agéntico: S-01…S-07, R-01…R-07, X-01…X-04, A-06).
+- **Entorno:** RTX 4060 Laptop de 8 GB, sin NVIDIA Container Toolkit (TEI en CPU por defecto; `make up-gpu` sin probar); 15 GB de RAM; uv 0.13.6, Compose 2.40, Node 22.
 
 ## Leyenda
 
@@ -83,35 +77,35 @@ Asistente agéntico de conocimiento para desarrolladores (RAG orquestado como gr
 | F-02 | OBL | `.gitignore`, `.env.example` documentado, política de secretos | ✅ Hecho | P0 | `.env.example` cubre todas las variables de §9 (un test verifica que cubre `Settings`); secretos opcionales comentados |
 | F-03 | OBL | Configuración de linting/formato/tipado y base de tests | ✅ Hecho | P2 | D-14: Ruff, mypy, pytest, pre-commit; ruff, mypy (strict en `common`), pytest y pre-commit configurados; 18 tests |
 | F-04 | OBL | uv workspace (`pyproject.toml` raíz + miembros) + `uv.lock` | ✅ Hecho | P0 | D-14; Workspace con 5 miembros + `uv.lock`; Python 3.12 |
-| F-05 | OBL | gitleaks en pre-commit y CI | 🔄 En curso | P0 | D-14; regla de no-secretos; Configurado (`.gitleaks.toml`, pre-commit, CI). Pendiente: ejecutar gitleaks (no instalado en la sesión) |
-| F-06 | OBL | Makefile (`up`, `up-gpu`, `seed`, `eval`, `test`, `lint`, `down`) | ✅ Hecho | P1 | D-14; Makefile; `up`/`up-gpu` pendientes de verificar con Docker; `seed` y `eval` quedan activos en Fases 1 y 4 |
-| F-07 | OBL | GitHub Actions: lint, mypy, tests, gitleaks | 🔄 En curso | P2 | D-14; `.github/workflows/ci.yml` escrito (python, compose config, gitleaks). Pendiente: primera corrida en GitHub |
+| F-05 | OBL | gitleaks en pre-commit y CI | ✅ Hecho | P0 | D-14; regla de no-secretos; Configurado (`.gitleaks.toml`, pre-commit, CI). `gitleaks dir` y `gitleaks git` (13 commits) sin hallazgos vía imagen `ghcr.io/gitleaks/gitleaks:v8.28.0`; hook de pre-commit en verde. Falso positivo `generic-api-key` en backlog.md («last-token pooling…») cubierto por allowlist de línea; config migrada a `[[allowlists]]` |
+| F-06 | OBL | Makefile (`up`, `up-gpu`, `seed`, `eval`, `test`, `lint`, `down`) | ✅ Hecho | P1 | D-14; Makefile; `up` verificado con Docker (exit 0, todo healthy); `up-gpu` sin probar (falta NVIDIA Container Toolkit); `seed` y `eval` quedan activos en Fases 1 y 4 |
+| F-07 | OBL | GitHub Actions: lint, mypy, tests, gitleaks | 🔄 En curso | P2 | D-14; `.github/workflows/ci.yml` escrito (python, compose config, gitleaks). Pasos locales equivalentes en verde (ruff, mypy, pytest, compose config, gitleaks). Pendiente: primera corrida en GitHub (falta URL del repo) |
 
 ## 2. Req. 1 — Servicio de ingesta
 
 | ID | Tipo | Tarea | Estado | Prioridad | Decisión / Contexto |
 |---|---|---|---|---|---|
-| I-01 | OBL | Endpoint de ingesta de PDF, TXT y MD | ⬜ Por hacer | P0 | |
-| I-02 | OBL | Parsers por formato (PDF con página; MD con encabezados) | ⬜ Por hacer | P0 | |
-| I-03 | OBL | Chunking + justificación documentada (tamaño, overlap, headers/semántico) | ⬜ Por hacer | P0 | |
-| I-04 | OBL | Metadatos por chunk: documento origen, página/sección, fecha de ingesta | ⬜ Por hacer | P0 | |
-| I-05 | OBL | Generación de embeddings y escritura en vector DB | ⬜ Por hacer | P0 | |
-| I-06 | OBL | Endpoints auxiliares (listar/eliminar documentos) | ⬜ Por hacer | P2 | |
-| I-07 | OBL | Tests básicos de ingesta y chunking | ⬜ Por hacer | P1 | |
-| I-08 | OBL | Scraper CLI: lista curada versionada (config), httpx con pausas + User-Agent, extracción de artículo, HTML→MD con encabezados, anclas y código con lenguaje | ⬜ Por hacer | P0 | D-11 |
-| I-09 | OBL | Snapshot `data/corpus/odoo19-dev/*.md` con frontmatter (url, title, fetched_at, license CC BY-SA 4.0) + atribución en README | ⬜ Por hacer | P0 | D-11 |
-| I-10 | OBL | Generar PDF de *Coding guidelines* (Chromium headless) e incluirlo en el corpus | ⬜ Por hacer | P1 | D-11; requisito ≥1 PDF |
-| I-11 | OBL | Script de carga (`make seed`) que ingesta el snapshot vía endpoint de ingesta | ⬜ Por hacer | P0 | D-11 |
-| I-12 | OBL | Calibrar chunking (512/64) con distribución real de tamaños de sección del snapshot | ⬜ Por hacer | P1 | Revisión pendiente D-06 |
+| I-01 | OBL | Endpoint de ingesta de PDF, TXT y MD | ✅ Hecho | P0 | `POST /documents` (multipart; 413/415/422/502); Swagger en `/docs` |
+| I-02 | OBL | Parsers por formato (PDF con página; MD con encabezados) | ✅ Hecho | P0 | parsers `markdown` (frontmatter), `pdf` (pymupdf4llm + marcadores de página), `txt` |
+| I-03 | OBL | Chunking + justificación documentada (tamaño, overlap, headers/semántico) | ✅ Hecho | P0 | `ingestion.chunking`; 12 tests (código intacto, rutas, solapamiento, fusión, páginas). Calibración en bitácora |
+| I-04 | OBL | Metadatos por chunk: documento origen, página/sección, fecha de ingesta | ✅ Hecho | P0 | payload completo §6.1: doc, section, url#anchor, page, n_tokens, content_hash, ingested_at |
+| I-05 | OBL | Generación de embeddings y escritura en vector DB | ✅ Hecho | P0 | TEI en lotes de 32 + upsert en Qdrant (lotes de 64), borrado previo por `doc_id` |
+| I-06 | OBL | Endpoints auxiliares (listar/eliminar documentos) | ✅ Hecho | P2 | `GET /documents`, `GET /documents/{id}`, `DELETE /documents/{id}` (borra puntos y fila) |
+| I-07 | OBL | Tests básicos de ingesta y chunking | ✅ Hecho | P1 | 42 tests nuevos (chunker, html→md, parsers, pipeline, API) sin red |
+| I-08 | OBL | Scraper CLI: lista curada versionada (config), httpx con pausas + User-Agent, extracción de artículo, HTML→MD con encabezados, anclas y código con lenguaje | ✅ Hecho | P0 | D-11; `python -m ingestion.scraper.cli`; lista en `services/ingestion/config/odoo19_pages.yaml` (58 páginas); pausa ≥1 s, UA identificable |
+| I-09 | OBL | Snapshot `data/corpus/odoo19-dev/*.md` con frontmatter (url, title, fetched_at, license CC BY-SA 4.0) + atribución en README | ✅ Hecho | P0 | D-11; 58 `.md` en `data/corpus/odoo19-dev/` con frontmatter; atribución CC BY-SA en `data/corpus/README.md` (el README raíz llega con ENT) |
+| I-10 | OBL | Generar PDF de *Coding guidelines* (Chromium headless) e incluirlo en el corpus | ✅ Hecho | P1 | D-11; requisito ≥1 PDF; `scripts/make_pdf.sh` (Chrome headless) → `coding_guidelines.pdf` (29 páginas) |
+| I-11 | OBL | Script de carga (`make seed`) que ingesta el snapshot vía endpoint de ingesta | ✅ Hecho | P0 | D-11; `make seed` ejecuta `python -m ingestion.seed` vía `POST /documents`; 59 archivos, 832 chunks, 36 min en CPU; re-seed 6 s (59 unchanged) |
+| I-12 | OBL | Calibrar chunking (512/64) con distribución real de tamaños de sección del snapshot | ✅ Hecho | P1 | Revisión pendiente D-06; 512/64 confirmado con el snapshot real; tabla en bitácora; `python -m ingestion.calibrate` |
 
 ## 3. Req. 7 — Base de datos vectorial
 
 | ID | Tipo | Tarea | Estado | Prioridad | Decisión / Contexto |
 |---|---|---|---|---|---|
-| V-01 | OBL | Levantar vector DB y crear colección/esquema | ⬜ Por hacer | P0 | |
-| V-02 | OBL | Configurar índice eficiente (HNSW) y documentar parámetros (m, ef_construct, ef…) | ⬜ Por hacer | P0 | |
-| V-03 | OBL | Filtrado por metadatos (p. ej. por documento) | ⬜ Por hacer | P0 | Payload indexes creados antes de ingestar (HNSW filtrable) |
-| V-05 | OBL | Postgres: tabla `documents` (doc_id, nombre, fuente, content_hash, modelo de embeddings, n_chunks, estado, fechas) + migraciones | 🔄 En curso | P0 | D-08; base para I-06, O-F, O-D; `001_documents.sql` idempotente + `common.db.migrate`. Pendiente: aplicar en Postgres real |
+| V-01 | OBL | Levantar vector DB y crear colección/esquema | ✅ Hecho | P0 | colección creada por `init`; 832 puntos tras el seed |
+| V-02 | OBL | Configurar índice eficiente (HNSW) y documentar parámetros (m, ef_construct, ef…) | ✅ Hecho | P0 | HNSW m=16, ef_construct=200, hnsw_ef=128 aplicados; umbrales 1000 KB. La medición va en V-04 |
+| V-03 | OBL | Filtrado por metadatos (p. ej. por documento) | ✅ Hecho | P0 | Payload indexes creados antes de ingestar (HNSW filtrable); filtro por `doc_id` verificado en Qdrant real (`/search` con `filters.doc_ids`) y en tests |
+| V-05 | OBL | Postgres: tabla `documents` (doc_id, nombre, fuente, content_hash, modelo de embeddings, n_chunks, estado, fechas) + migraciones | ✅ Hecho | P0 | D-08; base para I-06, O-F, O-D; `001_documents.sql` idempotente + `common.db.migrate`. Aplicada en Postgres 17 real: `documents` + 4 tablas `checkpoint*` |
 | V-04 | OBL | Medir recall@k de HNSW vs búsqueda exacta (`exact=true`) con preguntas de eval + latencia | ⬜ Por hacer | P1 | Evidencia empírica de parámetros D-05; forzar construcción HNSW (umbrales) |
 
 ## 4. Req. 2 — Supervisor
@@ -156,7 +150,7 @@ Asistente agéntico de conocimiento para desarrolladores (RAG orquestado como gr
 | A-04 | OBL | Manejo de errores y validación de esquemas (OpenAPI/Swagger) | ⬜ Por hacer | P1 | |
 | A-05 | OBL | Health checks | ⬜ Por hacer | P2 | |
 | A-06 | OBL | Modelo de eventos tipado (Pydantic): `node_started`, `node_finished`, `token`, `sources`, `interrupt`, `final`; REST agrega eventos | ⬜ Por hacer | P0 | D-13; base de A-03 y reto C |
-| A-07 | OBL | Endpoint `/search` (recuperación pura, filtros, top-k) | ⬜ Por hacer | P0 | D-13; usado por eval (recall@k) y reto A |
+| A-07 | OBL | Endpoint `/search` (recuperación pura, filtros, top-k) | ✅ Hecho | P0 | D-13; usado por eval (recall@k) y reto A; `POST /search` en agent (top_k, filters, exact, hnsw_ef, with_instruction); devuelve section, url#anchor, page |
 | A-08 | OBL | Interfaces en `packages/common`: `Embedder`, `Retriever` (`DenseRetriever`), `Reranker` (no-op), `SearchProvider`, LLM por rol; selección por `.env` | ✅ Hecho | P0 | D-13; `Embedder`/`TEIEmbedder`, `Retriever`/`DenseRetriever`, `Reranker`/`NoopReranker`, `SearchProvider`/`DdgsProvider`, `get_chat_model(role)`; tests con respx y Qdrant en memoria |
 | A-09 | OBL | Feature flags en settings: `HITL_ENABLED`, `RETRIEVER`, `RERANKER`, `TRACING`, `SEARCH_PROVIDER` | ✅ Hecho | P1 | D-13; Flags en `Settings` con `Literal`; validados por test |
 | S-07 | OBL | Nodo `confirm_external_search` pasivo (pass-through si `HITL_ENABLED=false`) antes de `search_odoo_forum` | ⬜ Por hacer | P1 | D-13; enganche reto D |
@@ -168,7 +162,7 @@ Asistente agéntico de conocimiento para desarrolladores (RAG orquestado como gr
 | U-01 | OBL | Chat funcional contra la API | ⬜ Por hacer | P0 | |
 | U-02 | OBL | Carga de documentos desde la UI | ⬜ Por hacer | P0 | |
 | U-03 | OBL | Mostrar fuentes citadas, agente que respondió y pasos recorridos | ⬜ Por hacer | P0 | |
-| U-04 | OBL | Copia limpia del frontend base a `frontend/` (sin `.git`, `.env`, `.vercel`, `node_modules`, `tsconfig.tsbuildinfo`) + rebranding total (eliminar marca BBVA) + tema propio | ⬜ Por hacer | P0 | D-09, fase v1 |
+| U-04 | OBL | Copia limpia del frontend base a `frontend/` (sin `.git`, `.env`, `.vercel`, `node_modules`, `tsconfig.tsbuildinfo`) + rebranding total (eliminar marca BBVA) + tema propio | ✅ Hecho | P0 | D-09, fase v1. Copia limpia (sin `.git`, `.env*`, `.vercel`, `vercel.json`, `node_modules`, `tsbuildinfo`); 0 referencias a BBVA. Tokens en `src/app/globals.css`: blanco + morado tipo Odoo `#714B67` (solo el color, sin logo ni nombre), teal `#016A6F` para el agente de investigación; IBM Plex Sans + JetBrains Mono. Mockup aprobado: https://claude.ai/artifact/13nBya1NJP4Yzf6LT2NVgo. `npm run build` OK. Pendiente: modo oscuro propio; cliente API (Fase 3) |
 | U-05 | OBL | Tipos TS generados desde OpenAPI de FastAPI (`openapi-typescript`) | ⬜ Por hacer | P1 | Contrato primero |
 | U-06 | OBL | Render Markdown + bloques de código con resaltado (`react-markdown`, `remark-gfm`, resaltador) | ⬜ Por hacer | P0 | Fase v1 |
 | U-07 | OBL | Citas: tarjetas (documento, sección, enlace) + marcadores `[n]` en el texto | ⬜ Por hacer | P0 | Fase v1 |
@@ -201,13 +195,13 @@ Asistente agéntico de conocimiento para desarrolladores (RAG orquestado como gr
 
 | ID | Tipo | Tarea | Estado | Prioridad | Decisión / Contexto |
 |---|---|---|---|---|---|
-| C-01 | OBL | Dockerfile multi-stage por servicio | 🔄 En curso | P0 | Dockerfiles de init, agent e ingestion (esqueletos, multi-stage `deps`→`build`→`runtime`, no-root). Pendiente: `docker build`. Frontend en U-13 |
+| C-01 | OBL | Dockerfile multi-stage por servicio | ✅ Hecho | P0 | Dockerfiles de init, agent e ingestion (esqueletos, multi-stage `deps`→`build`→`runtime`, no-root). Build real OK de init, agent e ingestion (~520–550 MB, uid 10001, `common` importable). Frontend en U-13 |
 | C-02 | OBL | Docker Compose: todo con un solo comando | ⬜ Por hacer | P0 | |
 | C-03 | OBL | Variables/secretos por `.env`; prueba en máquina limpia | ⬜ Por hacer | P0 | |
-| C-04 | OBL | Servicio `init` one-shot: tablas Postgres + colección Qdrant + payload indexes antes de ingestar | 🔄 En curso | P0 | D-10; garantiza regla D-05; `infra/init/bootstrap.py` + `common.qdrant_repo.ensure_collection` (tests con Qdrant en memoria). Pendiente: correr contra servicios reales |
-| C-05 | OBL | Healthchecks (pg_isready, Qdrant `/readyz`, TEI `/health`, servicios Python vía `python -c`) + `depends_on: service_healthy` | 🔄 En curso | P0 | Verificar curl en imágenes; sidecar si falta; Healthchecks en compose; Qdrant y TEI vía `bash /dev/tcp` (V-e sin verificar si la imagen trae bash) |
+| C-04 | OBL | Servicio `init` one-shot: tablas Postgres + colección Qdrant + payload indexes antes de ingestar | ✅ Hecho | P0 | D-10; garantiza regla D-05; `infra/init/bootstrap.py` + `common.qdrant_repo.ensure_collection` (tests con Qdrant en memoria). Contra servicios reales: crea colección (dense 1024 Cosine, HNSW m=16/ef_construct=200, sparse IDF, metadata modelo/dim) + 5 payload indexes; sale con 0; idempotente («already present» al re-ejecutar) |
+| C-05 | OBL | Healthchecks (pg_isready, Qdrant `/readyz`, TEI `/health`, servicios Python vía `python -c`) + `depends_on: service_healthy` | ✅ Hecho | P0 | Verificar curl en imágenes; sidecar si falta; Healthchecks en compose; Qdrant y TEI vía `bash /dev/tcp` (V-e verificado: Qdrant y TEI traen bash; los cuatro healthy con `make up`). Healthchecks `python -c` de agent/ingestion llegan con esos servicios |
 | C-06 | OBL | `compose.gpu.yaml` (TEI GPU + reserva de dispositivo) y `compose.override.yaml` (dev, `develop.watch`, Qdrant en loopback) | ⬜ Por hacer | P1 | D-10 |
-| C-07 | OBL | `additional_contexts` para `packages/common` en builds de agent/ingestion/init | 🔄 En curso | P0 | Verificar Compose ≥ 2.17; `additional_contexts` `common` y `workspace` en `init`; `docker compose config` OK. Pendiente: build real |
+| C-07 | OBL | `additional_contexts` para `packages/common` en builds de agent/ingestion/init | ✅ Hecho | P0 | Verificar Compose ≥ 2.17; `additional_contexts` `common` y `workspace` en `init`; `docker compose config` OK. Build real OK de init, agent e ingestion (Compose 2.40; el host no tiene `buildx`, el builder de Compose sí soporta `additional_contexts`) |
 
 ## 11. Retos opcionales (bonus hasta +15%)
 
@@ -579,6 +573,58 @@ Entradas cronológicas (más reciente arriba). Plantilla:
 - Próximos pasos:
 ```
 
+### 2026-11-02 — Frontend: diseño y U-04
+- Hecho: mockup de Chat y Analytics (canvas https://claude.ai/artifact/13nBya1NJP4Yzf6LT2NVgo), aprobado por el usuario. Copia limpia del frontend base a `frontend/`, sin `.git`, `.env*`, `.vercel`, `vercel.json` ni `node_modules`. Branding BBVA eliminado: logo reemplazado por un ícono `</>` genérico, textos y preguntas sugeridas de Odoo 19, `lang="es"`. Tokens Tailwind 4 en `globals.css`; colores y grises claros mapeados a clases semánticas. `npm run build` OK; lint con 4 warnings de variables sin usar en el dashboard heredado (se reescribe en U-12).
+- Decisiones: paleta blanco + morado tipo Odoo `#714B67`. El usuario descartó el violeta `#7C3AED`. Solo se toma el color, sin logo ni nombre de Odoo. Teal `#016A6F` (secundario de Odoo, oscurecido para contraste ≥4.5:1) identifica al agente de investigación. Tipografía IBM Plex Sans + JetBrains Mono. Nombre provisional «Asistente Dev».
+- Pendiente: modo oscuro propio (las clases `dark:` heredadas siguen en gris), cliente API contra `/query` y `/documents` (Fase 3), Dockerfile `standalone` (U-13). `.gitleaks.toml` excluye `.next/` y `node_modules/`.
+
+### 2026-11-02 — Fase 1: Ingesta + vector
+- Hecho:
+  - Servicio `ingestion` (FastAPI): `POST/GET/DELETE /documents`, `/health`; parsers MD/PDF/TXT, chunker jerárquico, pipeline (embed TEI → Qdrant → `documents`), `seed`, `calibrate` y scraper CLI. Servicio `agent` con `POST /search` y `/health`. Ambos en `compose.yaml` con healthcheck y `depends_on` (init completado; embeddings, qdrant, postgres healthy).
+  - Corpus: 58 páginas de Odoo 19 Developer (1,1 MB de MD) + `coding_guidelines.pdf` (Chrome headless, 29 páginas). Atribución en `data/corpus/README.md`.
+  - Verificado en real: `make seed` = 59 archivos, 832 chunks, 2190 s (36 min, TEI CPU). Qdrant 832 puntos; Postgres 59 `indexed`, suma de `n_chunks` 832. Re-seed: 59 `unchanged` en 6 s. `DELETE` de un doc deja 803 puntos y responde 404 al repetir; re-subir el PDF vuelve a 832.
+  - `/search` con «¿cómo defino un campo computado en el ORM?»: top-1 «Chapter 8: Computed Fields And Onchanges > Computed Fields» (0,76, `…/08_compute_onchange.html#computed-fields`), luego ORM API > Fields y Dependencies; 279 ms. Con `filters.doc_ids` del PDF: «Coding guidelines > Python > Imports», `page` 9.
+  - Tests: 60 en total (42 nuevos). Chunker: ningún bloque de código se parte (también uno mayor que el tamaño queda solo).
+- Calibración del chunking (I-12), tokenizer Qwen3, 59 documentos, 579 secciones H1–H3:
+  - Tamaño de sección en tokens: media 452, p50 233, p90 902, p99 4448, máx 6717; el 25 % supera 512.
+
+  | tamaño/overlap | chunks | media | p50 | p90 | máx | < 100 tok | > tamaño |
+  |---|---|---|---|---|---|---|---|
+  | 256/32 | 1504 | 183 | 202 | 241 | 505 | 12 % | 6 |
+  | 384/48 | 1045 | 262 | 297 | 360 | 505 | 8 % | 1 |
+  | **512/64** | **832** | 327 | 357 | 479 | 512 | 5 % | 0 |
+  | 768/96 | 650 | 413 | 386 | 704 | 768 | 3 % | 0 |
+  | 1024/128 | 575 | 464 | 374 | 928 | 1022 | 2 % | 0 |
+
+  Conclusión: se mantiene 512/64. 256 y 384 fragmentan en exceso (más chunks, más embeddings en CPU, más chunks diminutos). 768 y 1024 diluyen el vector (p90 cerca del máximo) y suben el costo del grader. Con 512 ningún chunk excede el tamaño: el bloque de código más grande mide ~505 tokens.
+- Problemas / hallazgos:
+  1. TEI CPU rinde ~2,6 s por chunk de ~330 tokens (batch ≤4 peticiones). El timeout del cliente `TEIEmbedder` (60 s) cortaba el PDF; ahora 300 s.
+  2. `docker compose wait init` falla («no containers») cuando init ya terminó; se quitó. `up --wait` de ingestion/agent ya exige `service_completed_successfully` de init.
+  3. pymupdf4llm 2.1 arrastra `pymupdf-layout` y onnxruntime (más peso en la imagen). Cierra V-g (ver §16).
+  4. El HTML de autodoc (ORM API) no tiene encabezados finos: se convirtieron las firmas `<dt id>` en H4 con ancla; el chunker no corta por H4 pero el chunk toma el ancla de la última entrada, así que las citas apuntan a `#odoo.fields.Char` y no solo a la sección.
+  5. Un seed interrumpido con Ctrl-C no mata el proceso dentro del contenedor.
+- Decisiones y desviaciones:
+  1. `unchanged` por `content_hash` + modelo ya está activo (adelanto mínimo del reto F), porque «re-seed idempotente» lo pedía; `force` lo salta. El hash del documento no incluye los parámetros de chunking: tras cambiar 512/64 hay que usar `FORCE=1`.
+  2. `compose.override.yaml` publica también ingestion (127.0.0.1:8001) y agent (127.0.0.1:8000) para curl y Swagger en desarrollo (el diseño solo exponía Qdrant en el override).
+  3. El tokenizer Qwen3 se descarga una vez de Hugging Face al arrancar `ingestion` y se cachea en `documents-data` (`TOKENIZER_CACHE_DIR`); no se usa el volumen de TEI para no pelear permisos.
+  4. Chunks: el `anchor` se guarda como `#id` solo para fuentes http(s); en uploads sin URL, `url` = nombre del archivo y `anchor` nulo. Secciones sin cuerpo (solo título) no generan chunk; las menores de 100 tokens se funden con la anterior (o la siguiente) si caben.
+  5. Atribución CC BY-SA en `data/corpus/README.md` porque aún no existe el README raíz (ENT-01).
+  6. Se añadieron `documents_repo`, `ids`, `schemas/{api,documents}` en `common` (previstos en §10) y el setting `TOKENIZER_CACHE_DIR`.
+  7. PDF: sigue `pymupdf4llm`, con defecto conocido de espacios perdidos en algunos bloques de código (V-g).
+- Próximos pasos: Fase 2 (grafo agéntico). V-04 (recall HNSW vs exacto) en la Fase 4: `/search` ya acepta `exact` y `hnsw_ef`. Commits: corpus aparte del código.
+
+### 2026-11-02 — Fase 0: verificación con Docker
+- Hecho: pasos 1–6 del handoff. `make up` → postgres, qdrant y embeddings en healthy; `init` aplica `001_documents.sql`, crea las tablas del checkpointer y la colección `odoo19_dev` (dense 1024 Cosine, HNSW m=16 y ef_construct=200, sparse con IDF, metadata con modelo y dimensión, 5 payload indexes) y sale con 0. Re-ejecutado responde «already present» (idempotente). TEI devuelve vectores de 1024 dims con norma 1.0. Builds de init, agent e ingestion OK (non-root, uid 10001). gitleaks `dir` y `git` sin hallazgos; `pre-commit run --all-files` en verde.
+- Problemas / hallazgos:
+  1. TEI `cpu-1.8.3` no arrancaba con Qwen3: `max_input_length` (32768) es mayor que `--max-batch-tokens` (16384) y exige `--auto-truncate`.
+  2. Con ese flag, el warm-up de 16384 tokens en CPU subió a ~12 GB de RSS y el OOM killer del kernel mató el proceso, que quedó en bucle de reinicios. Se fijó `--max-batch-tokens 4096`: arranca en ~30 s con ~4 GB de RAM. Los chunks son de ~512 tokens (D-06), así que solo se truncarían entradas de más de 4096 tokens. Confirma RK-01: TEI en CPU necesita ~4 GB de RAM.
+  3. Qwen3 no trae ONNX: TEI registra 404 y errores de ORT y pasa al backend Candle. Es ruido esperado.
+  4. V-e cerrado: las imágenes de Qdrant y TEI traen `bash`; los healthchecks por `/dev/tcp` funcionan.
+  5. gitleaks marcaba «last-token pooling, L2-normalizado» en backlog.md como `generic-api-key` (falso positivo, también en el historial). Se añadió una allowlist de línea acotada y se migró `.gitleaks.toml` a `[[allowlists]]`, porque v8.28 no permite mezclarlo con `[allowlist]`.
+  6. El host no tiene `docker buildx`; `docker compose build` sí soporta `additional_contexts`. agent e ingestion se construyeron con un compose temporal, porque aún no están en `compose.yaml`.
+- Decisiones tomadas: parámetros de TEI arriba (ajuste operativo de D-04 y D-10, sin cambiar el modelo).
+- Próximos pasos: subir el repo y validar la CI (F-07); Fase 1.
+
 ### 2026-11-02 — Fase 0: Fundación
 - Hecho: F-01…F-04, F-06, A-08 y A-09 completas. F-05, F-07, C-01 (esqueletos), C-04, C-05, C-07 y V-05 escritas y probadas hasta donde permite la sesión sin Docker (ver «pendiente»). Repo git en `main`, uv workspace de 5 miembros, `packages/common` (settings, interfaces, `qdrant_repo`, migración 001), `infra/init`, `compose.yaml` con override y GPU, Makefile, pre-commit y CI.
 - Verificado localmente: `ruff check`, `ruff format --check`, `mypy` (24 archivos) y `pytest` (18 tests) en verde; `docker compose config` OK (base y con override + GPU); simulación del `uv sync --frozen --no-install-workspace --package odoo-rag-init` del Dockerfile.
@@ -615,7 +661,7 @@ Entradas cronológicas (más reciente arriba). Plantilla:
 
 | ID | Riesgo / Pregunta | Mitigación / Respuesta | Estado |
 |---|---|---|---|
-| RK-01 | Evaluador sin GPU: embeddings 0.6B en CPU lentos en ingesta | `device=auto` + imagen CPU por defecto; GPU como override de Compose; documentar tiempos | Abierto |
+| RK-01 | Evaluador sin GPU: embeddings 0.6B en CPU lentos en ingesta | `device=auto` + imagen CPU por defecto; GPU como override de Compose; documentar tiempos. Medido 2026-11-02: TEI CPU usa ~4 GB de RAM con `--max-batch-tokens 4096` (con 16384 hubo OOM); documentar ≥8 GB de RAM libres en el README | Abierto |
 | RK-02 | ~~Dataset debe ser documentación técnica pública en español~~ → Actualizado 2026-11-02: corpus técnico de Odoo 19 (sección Developer), casi todo en inglés | Recuperación cross-lingual si consultas en español (Qwen3 multilingüe la soporta); validar en eval | Abierto |
 | RK-03 | `robots.txt` de odoo.com prohíbe el buscador del foro (`Disallow: *?*search=*`) | No usar buscador interno; buscar vía motor externo con `site:` y leer posts individuales (permitidos) | Mitigado (D-07) |
 | RK-04 | `ddgs` (API no oficial) puede bloquear por rate limit durante demo | Caché, reintentos con backoff, estados explícitos; plan B SearXNG solo si el test falla | Abierto |
