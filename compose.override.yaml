@@ -1,6 +1,7 @@
 # Dev override, loaded automatically by `docker compose`.
 # Qdrant and the ingestion/agent APIs (curl, Swagger at /docs) on loopback only.
-# `develop.watch` for agent/ingestion/frontend arrives in Phase 3 (C-06).
+# `docker compose watch` (C-06): the images install the code (non-editable venv / Next
+# standalone), so source changes trigger a rebuild of the affected service.
 services:
   qdrant:
     ports:
@@ -8,6 +9,29 @@ services:
   ingestion:
     ports:
       - "127.0.0.1:8001:8001"
+    develop:
+      watch:
+        - action: rebuild
+          path: ./services/ingestion/src
+        - action: rebuild
+          path: ./packages/common/src
+        - action: rebuild
+          path: ./uv.lock
   agent:
     ports:
       - "127.0.0.1:8000:8000"
+    develop:
+      watch:
+        - action: rebuild
+          path: ./services/agent/src
+        - action: rebuild
+          path: ./packages/common/src
+        - action: rebuild
+          path: ./uv.lock
+  frontend:
+    develop:
+      watch:
+        - action: rebuild
+          path: ./frontend/src
+        - action: rebuild
+          path: ./frontend/package-lock.json

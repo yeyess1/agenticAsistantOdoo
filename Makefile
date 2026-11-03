@@ -2,7 +2,7 @@
 COMPOSE      ?= docker compose
 COMPOSE_GPU  ?= docker compose -f compose.yaml -f compose.override.yaml -f compose.gpu.yaml
 
-.PHONY: help env up up-gpu seed eval test lint graph fmt down logs ps
+.PHONY: help env up up-gpu seed eval test lint graph openapi fmt watch down logs ps
 
 help: ## List targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-8s %s\n", $$1, $$2}'
@@ -12,11 +12,11 @@ env: ## Create .env from .env.example if missing
 
 up: env ## Build and start the stack (TEI on CPU), wait for init and healthy datastores
 	$(COMPOSE) up -d --build
-	$(COMPOSE) up -d --no-build --wait postgres qdrant embeddings ingestion agent
+	$(COMPOSE) up -d --no-build --wait postgres qdrant embeddings ingestion agent frontend
 
 up-gpu: env ## Same as `up` with TEI on GPU (NVIDIA Container Toolkit required)
 	$(COMPOSE_GPU) up -d --build
-	$(COMPOSE_GPU) up -d --no-build --wait postgres qdrant embeddings ingestion agent
+	$(COMPOSE_GPU) up -d --no-build --wait postgres qdrant embeddings ingestion agent frontend
 
 seed: ## Ingest the corpus snapshot through POST /documents (FORCE=1 reindexes unchanged docs)
 	$(COMPOSE) exec ingestion python -m ingestion.seed /data/corpus/odoo19-dev $(if $(FORCE),--force)
@@ -34,6 +34,12 @@ lint: ## ruff (lint + format check) and mypy
 
 graph: ## Export the agent graph as Mermaid to docs/graph.mmd (compare with ARCHITECTURE section 3.1)
 	uv run python scripts/export_graph.py
+
+openapi: ## Export the agent/ingestion OpenAPI specs and regenerate the frontend TS types (U-05)
+	cd frontend && npm run gen:api:full
+
+watch: ## Dev loop: rebuild agent/ingestion/frontend on source changes (compose.override.yaml)
+	$(COMPOSE) watch
 
 fmt: ## Auto-format and fix
 	uv run ruff format .

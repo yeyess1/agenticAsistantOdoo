@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Self-contained server for the Docker image (U-13): `.next/standalone/server.js`.
+  output: "standalone",
 };
 
 export default nextConfig;
