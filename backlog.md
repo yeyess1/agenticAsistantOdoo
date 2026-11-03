@@ -5,17 +5,20 @@ Asistente agéntico de conocimiento para desarrolladores (RAG orquestado como gr
 
 ## Estado actual (handoff entre sesiones)
 
-> Actualizado 2026-11-02 (noche, tras la Fase 1). Leer esto primero al retomar una sesión nueva.
+> Actualizado 2026-11-02 (noche, tras la Fase 2). Leer esto primero al retomar una sesión nueva.
 
 - **Fase de decisiones:** cerrada (D-01…D-14). Diseño en `docs/ARCHITECTURE.md`, aprobado.
 - **Fase 0 (Fundación):** cerrada, incluida F-07: CI en verde en GitHub. Repo: https://github.com/yeyess1/agenticAsistantOdoo (push con la cuenta gh `yeyess1`; la activa por defecto, `yeiCastordata`, no tiene permiso de push).
 - **Fase 1 (Ingesta + vector):** hecha y verificada con el stack real. `make up` levanta también `ingestion` (:8001) y `agent` (:8000, solo `/search` y `/health`), ambos en healthy. `make seed` indexó 59 archivos (58 MD + 1 PDF) = 832 puntos en Qdrant = 59 filas `indexed` en Postgres. Re-seed idempotente (59 unchanged, 6 s). ruff, mypy, pytest (60) y pre-commit en verde.
   - ✅ Hechas: I-01…I-12, V-01…V-03, A-07. ⬜ V-04 queda para la Fase 4.
-- **Cambios sin commitear:** todo el trabajo de las Fases 0 (fixes) y 1 está en el árbol de trabajo. Se borró `scripts/.gitkeep` (ya hay `make_pdf.sh`). El corpus (`data/corpus/odoo19-dev`, ~1,1 MB + PDF 1,3 MB) debe ir en un commit propio.
+- **Cambios sin commitear:** el trabajo de la Fase 2 (más lo pendiente de las anteriores, si lo hubiera) está en el árbol de trabajo. Se borró `scripts/.gitkeep` (ya hay `make_pdf.sh`). El corpus (`data/corpus/odoo19-dev`, ~1,1 MB + PDF 1,3 MB) debe ir en un commit propio.
 - **Ojo:** el seed completo tarda ~36 min con TEI en CPU (~2,6 s por chunk). Re-ejecutarlo con `FORCE=1` repite esa espera. `/search` responde en ~0,3 s.
 - **Nota de entorno:** comandos Docker con `sg docker -c "..."` solo si la sesión arrancó antes de entrar al grupo `docker`. Sin `docker buildx`; `docker compose build` funciona. `frontend/.next/` y `node_modules/` quedan excluidos en `.gitleaks.toml`.
 - **Frontend (adelantado):** U-04 hecho (copia limpia + paleta morado tipo Odoo `#714B67`). Golden set (E-01) en redacción en `eval/golden/golden_set.yaml`.
-- **Siguiente paso:** Fase 2 (grafo agéntico: S-01…S-07, R-01…R-07, X-01…X-04, A-06).
+- **Fase 2 (Grafo agéntico):** hecha y verificada (2026-11-02, noche). Grafo LangGraph en `services/agent/src/agent/graph/` (`build_graph(deps, checkpointer)`), herramientas del foro en `agent/tools/`, eventos tipados en `common/schemas/events.py` + `agent/events.py` (`stream_events`). Diagrama exportado a `docs/graph.mmd` (`make graph`) y verificado contra §3.1. 88 tests; ruff, mypy y pre-commit en verde. Humo en vivo con Anthropic + TEI + Qdrant + Postgres: docs, direct, research y seguimiento con memoria en Postgres. V-k cerrada (ver §16 de ARCHITECTURE).
+  - ✅ Hechas: S-01…S-07, R-01…R-07, X-01…X-04, A-06. Sin endpoint `/query` aún (Fase 3: A-01…A-05, SSE, `mode=linear`).
+  - **Ojo:** `read_forum_post` necesita TLS 1.2 contra www.odoo.com desde la imagen `python:3.12-slim` (con TLS 1.3 + ALPN `http/1.1` el servidor no responde); ya está aplicado en `forum_ssl_context()`.
+- **Siguiente paso:** Fase 3 (API `/query`, `routes_graph`, frontend v1: A-01…A-05, E-02, U-01…U-13, C-02, C-03, C-06). El checkpointer de producción: `postgres_checkpointer(settings)` en `agent/graph/checkpointer.py` (las tablas las crea `init`).
 - **Entorno:** RTX 4060 Laptop de 8 GB, sin NVIDIA Container Toolkit (TEI en CPU por defecto; `make up-gpu` sin probar); 15 GB de RAM; uv 0.13.6, Compose 2.40, Node 22.
 
 ## Leyenda
@@ -112,33 +115,33 @@ Asistente agéntico de conocimiento para desarrolladores (RAG orquestado como gr
 
 | ID | Tipo | Tarea | Estado | Prioridad | Decisión / Contexto |
 |---|---|---|---|---|---|
-| S-01 | OBL | Definir estado tipado del grafo (TypedDict/Pydantic) | ⬜ Por hacer | P0 | |
-| S-02 | OBL | Nodo clasificador/router: docs · investigación · respuesta directa | ⬜ Por hacer | P0 | |
-| S-03 | OBL | Nodo de respuesta directa (saludo / fuera de alcance) | ⬜ Por hacer | P0 | |
-| S-04 | OBL | Delegación a investigación cuando docs responde "sin contexto" | ⬜ Por hacer | P0 | |
-| S-05 | OBL | Tests del enrutamiento | ⬜ Por hacer | P1 | |
-| S-06 | OBL | Nodo de contextualización: reescribe preguntas de seguimiento como pregunta independiente usando el historial (Haiku), antes del router | ⬜ Por hacer | P0 | D-08 |
+| S-01 | OBL | Definir estado tipado del grafo (TypedDict/Pydantic) | ✅ Hecho | P0 | `graph/state.py`: `GraphState`/`DocsState` (TypedDict) con reducers `add_or_reset` por turno (`reducers.py`: `Reset`, clave de dedupe para el subgrafo) y salidas Pydantic |
+| S-02 | OBL | Nodo clasificador/router: docs · investigación · respuesta directa | ✅ Hecho | P0 | `nodes/router.py`: Haiku con `RouteDecision` (structured output `json_schema`, `effort=low`); si falla, cae a `docs` |
+| S-03 | OBL | Nodo de respuesta directa (saludo / fuera de alcance) | ✅ Hecho | P0 | `nodes/direct.py`: Haiku (`LLM_MODEL_DIRECT`), en español, con streaming; también atiende el rechazo HITL |
+| S-04 | OBL | Delegación a investigación cuando docs responde "sin contexto" | ✅ Hecho | P0 | `route_after_docs` en `supervisor.py`: `no_context=True` → `confirm_external_search` → research; `delegated=True` y nota en la respuesta |
+| S-05 | OBL | Tests del enrutamiento | ✅ Hecho | P1 | `tests/test_graph.py`: una prueba por ruta (direct, docs, research), fallos del router y secuencia de nodos |
+| S-06 | OBL | Nodo de contextualización: reescribe preguntas de seguimiento como pregunta independiente usando el historial (Haiku), antes del router | ✅ Hecho | P0 | D-08; `nodes/contextualize.py`: pass-through sin historial; recorte `HISTORY_MAX_TURNS/TOKENS`; probado con `InMemorySaver` y en vivo con `AsyncPostgresSaver` |
 
 ## 5. Req. 3 — Subagente de documentación (RAG)
 
 | ID | Tipo | Tarea | Estado | Prioridad | Decisión / Contexto |
 |---|---|---|---|---|---|
-| R-01 | OBL | Subgrafo con nodos: retriever, grader, rewriter, generator | ⬜ Por hacer | P0 | |
-| R-02 | OBL | Grader: relevancia por chunk | ⬜ Por hacer | P0 | |
-| R-03 | OBL | Arista condicional + ciclo controlado rewriter → retriever (límite de iteraciones) | ⬜ Por hacer | P0 | |
-| R-04 | OBL | Generator con citas (documento + sección) por afirmación | ⬜ Por hacer | P0 | |
-| R-05 | OBL | Señal explícita de "sin contexto" hacia el supervisor | ⬜ Por hacer | P0 | |
-| R-06 | OBL | Tests del subgrafo (ciclo, límite, sin contexto) | ⬜ Por hacer | P1 | |
-| R-07 | OBL | Rewriter bilingüe: puede reformular y/o traducir la consulta ES → EN (corpus en inglés); la respuesta final siempre en español | ⬜ Por hacer | P0 | Consultas en español sobre corpus en inglés (2026-11-02). Medido en E-09 |
+| R-01 | OBL | Subgrafo con nodos: retriever, grader, rewriter, generator | ✅ Hecho | P0 | `graph/docs_subgraph.py`: subgrafo compilado `docs_agent` (retriever, grader, generator, rewriter, no_context) |
+| R-02 | OBL | Grader: relevancia por chunk | ✅ Hecho | P0 | `nodes/grader.py`: una llamada por lote (`GradeBatch`, ids `c1..ck`); si falla, fail-open con todos los chunks |
+| R-03 | OBL | Arista condicional + ciclo controlado rewriter → retriever (límite de iteraciones) | ✅ Hecho | P0 | `route_after_grader`: ciclo `rewriter → retriever` acotado por `MAX_REWRITES` (por defecto 2 → 3 recuperaciones como máximo) |
+| R-04 | OBL | Generator con citas (documento + sección) por afirmación | ✅ Hecho | P0 | `nodes/generator.py` + `citations.py`: respuesta en español con `[n]`, `url#anchor` o `page`; `cited` marcado en post-proceso; marcadores inválidos quedan en `detail.invalid_citations` |
+| R-05 | OBL | Señal explícita de "sin contexto" hacia el supervisor | ✅ Hecho | P0 | nodo `no_context` (determinista) → `no_context=True` → el supervisor delega |
+| R-06 | OBL | Tests del subgrafo (ciclo, límite, sin contexto) | ✅ Hecho | P1 | `test_graph.py`: ciclo que recupera tras traducir, límite de reescrituras, recuperación vacía y delegación a research |
+| R-07 | OBL | Rewriter bilingüe: puede reformular y/o traducir la consulta ES → EN (corpus en inglés); la respuesta final siempre en español | ✅ Hecho | P0 | Consultas en español sobre corpus en inglés (2026-11-02). Medido en E-09; `nodes/rewriter.py` (`RewriteOutput` con `language` y `strategy`); la consulta reescrita (EN) es la que recupera en la vuelta siguiente (probado) |
 
 ## 6. Req. 4 — Subagente de investigación
 
 | ID | Tipo | Tarea | Estado | Prioridad | Decisión / Contexto |
 |---|---|---|---|---|---|
-| X-01 | OBL | Herramienta externa con esquema tipado (tool calling) | ⬜ Por hacer | P0 | |
-| X-02 | OBL | Manejo de errores: timeout, resultado vacío, reintentos | ⬜ Por hacer | P0 | |
-| X-03 | OBL | Respuesta marcada como fuente externa + enlaces usados | ⬜ Por hacer | P0 | |
-| X-04 | OBL | Tests con herramienta simulada (mock) | ⬜ Por hacer | P1 | |
+| X-01 | OBL | Herramienta externa con esquema tipado (tool calling) | ✅ Hecho | P0 | `tools/forum.py`: `search_odoo_forum` y `read_forum_post` (`StructuredTool` con `args_schema` Pydantic); bucle propio con `tool_choice=auto` en `nodes/research.py` |
+| X-02 | OBL | Manejo de errores: timeout, resultado vacío, reintentos | ✅ Hecho | P0 | timeout (`SEARCH_TIMEOUT_S`/`READ_TIMEOUT_S`), reintentos con backoff y jitter, caché TTL, allowlist, estados `ok/empty/timeout/error` sin lanzar excepciones al LLM, pausa mínima de 1 s entre peticiones |
+| X-03 | OBL | Respuesta marcada como fuente externa + enlaces usados | ✅ Hecho | P0 | `finalize_external`: bloque «Fuente externa: Odoo Forum» con los enlaces leídos; sin fuentes reales responde «no encontré…» sin inventar |
+| X-04 | OBL | Tests con herramienta simulada (mock) | ✅ Hecho | P1 | `tests/test_tools.py` (12) y tests del bucle de research con proveedor y HTTP simulados |
 
 ## 7. Req. 5 — API de consultas
 
@@ -149,11 +152,11 @@ Asistente agéntico de conocimiento para desarrolladores (RAG orquestado como gr
 | A-03 | OBL | Respuesta con: agente que respondió, nodos recorridos, fuentes | ⬜ Por hacer | P0 | |
 | A-04 | OBL | Manejo de errores y validación de esquemas (OpenAPI/Swagger) | ⬜ Por hacer | P1 | |
 | A-05 | OBL | Health checks | ⬜ Por hacer | P2 | |
-| A-06 | OBL | Modelo de eventos tipado (Pydantic): `node_started`, `node_finished`, `token`, `sources`, `interrupt`, `final`; REST agrega eventos | ⬜ Por hacer | P0 | D-13; base de A-03 y reto C |
+| A-06 | OBL | Modelo de eventos tipado (Pydantic): `node_started`, `node_finished`, `token`, `sources`, `interrupt`, `final`; REST agrega eventos | ✅ Hecho | P0 | D-13; base de A-03 y reto C; `common/schemas/events.py` (+ `QueryResponse`, `SourceRef`, `StepRecord` en `api.py`); los nodos emiten con `get_stream_writer`, `agent/events.py` sella `run_id/thread_id/seq/ts`; `error` incluido. Faltan solo los consumidores REST/SSE (Fase 3) |
 | A-07 | OBL | Endpoint `/search` (recuperación pura, filtros, top-k) | ✅ Hecho | P0 | D-13; usado por eval (recall@k) y reto A; `POST /search` en agent (top_k, filters, exact, hnsw_ef, with_instruction); devuelve section, url#anchor, page |
 | A-08 | OBL | Interfaces en `packages/common`: `Embedder`, `Retriever` (`DenseRetriever`), `Reranker` (no-op), `SearchProvider`, LLM por rol; selección por `.env` | ✅ Hecho | P0 | D-13; `Embedder`/`TEIEmbedder`, `Retriever`/`DenseRetriever`, `Reranker`/`NoopReranker`, `SearchProvider`/`DdgsProvider`, `get_chat_model(role)`; tests con respx y Qdrant en memoria |
 | A-09 | OBL | Feature flags en settings: `HITL_ENABLED`, `RETRIEVER`, `RERANKER`, `TRACING`, `SEARCH_PROVIDER` | ✅ Hecho | P1 | D-13; Flags en `Settings` con `Literal`; validados por test |
-| S-07 | OBL | Nodo `confirm_external_search` pasivo (pass-through si `HITL_ENABLED=false`) antes de `search_odoo_forum` | ⬜ Por hacer | P1 | D-13; enganche reto D |
+| S-07 | OBL | Nodo `confirm_external_search` pasivo (pass-through si `HITL_ENABLED=false`) antes de `search_odoo_forum` | ✅ Hecho | P1 | D-13; enganche reto D; `nodes/confirm.py`: pass-through con `HITL_ENABLED=false`; con `true` llama `interrupt()` y enruta a research o a `direct_answer`. Probado con `InMemorySaver` |
 
 ## 8. Req. 6 — Interfaz de chat
 
@@ -572,6 +575,38 @@ Entradas cronológicas (más reciente arriba). Plantilla:
 - Decisiones tomadas (ref. D-XX):
 - Próximos pasos:
 ```
+
+### 2026-11-02 — Fase 2: Grafo agéntico
+- **Hecho:**
+  - Prueba V-k (script desechable fuera del repo) contra Haiku 5.5 y Sonnet 5.5: ver hallazgos. Cerrada en ARCHITECTURE §16.
+  - Grafo con la topología exacta de §3.1: `contextualize → router → {docs_agent | confirm_external_search | direct_answer}`; `docs_agent` es un subgrafo compilado (`retriever → grader → generator | rewriter (ciclo ≤ MAX_REWRITES) | no_context`); `no_context` delega a `confirm_external_search → research_llm ⇄ tools → finalize_external`. `build_graph(deps, checkpointer)` recibe el checkpointer; `postgres_checkpointer(settings)` abre `AsyncPostgresSaver` con pool. Diagrama: `scripts/export_graph.py` → `docs/graph.mmd` (`make graph`); un test compara nodos y aristas con §3.1.
+  - Estado `TypedDict` con reducers (`reducers.py`): listas por turno con `Reset` (lo emite `contextualize`) y fusión por clave para que el subgrafo con claves compartidas no duplique `steps`/`sources`. Salidas Pydantic: `StandaloneQuestion`, `RouteDecision`, `GradeBatch`/`ChunkVerdict`, `RewriteOutput` (R-07).
+  - Eventos A-06: `common/schemas/events.py` (`node_started`, `node_finished` con usage y costo por nodo, `token`, `sources`, `interrupt`, `final`, `error`) y `QueryResponse`/`SourceRef`/`StepRecord` en `schemas/api.py`. Los nodos emiten con `get_stream_writer()` (decorador `traced`); `agent/events.py::stream_events` sella `run_id/thread_id/seq/ts`, reanuda interrupciones y cierra con `final`.
+  - Herramientas del foro (`tools/forum.py`, `allowlist.py`, `cache.py`): `search_odoo_forum` (ddgs + `site:` + filtro de allowlist y de `/forum/`, sin buscador interno) y `read_forum_post` (bs4: pregunta, respuestas ordenadas por aceptada y votos); timeout, reintentos con backoff y jitter, caché TTL, pausa de 1 s, estados `ok/empty/timeout/error` sin excepciones hacia el LLM. `finalize_external` marca «Fuente externa: Odoo Forum» y responde «no encontré…» si no hay fuentes reales.
+  - 88 tests en total (28 nuevos en agent: 12 de herramientas y 15 de grafo, más el de TLS) con `GenericFakeChatModel` (subclase `ScriptedChat` con salidas estructuradas guionadas), retriever y proveedor simulados: una ruta por prueba, límite del ciclo, «sin contexto» → research, tool con timeout/vacío/allowlist, límite de iteraciones de research, secuencia de eventos, uso y costo, seguimiento con checkpointer, HITL con `interrupt`.
+  - Humo en vivo (imagen `agent` reconstruida, `docker compose run` contra el stack real con `AsyncPostgresSaver`): ver «Evidencia».
+- **Problemas / hallazgos:**
+  - V-k: `with_structured_output(schema, method="json_schema", include_raw=True)` funciona en ambos modelos, sin forced `tool_choice` ni prefill. Sonnet 5.5 devuelve 400 con `tool_choice` de tipo `tool`/`any` (Haiku 5.5 lo acepta), así que el método por defecto (forced tool calling) no sirve y se fija `json_schema`. `effort` se envía como `output_config.effort` (`ChatAnthropic(effort=...)`) y ambos lo aceptan. `bind_tools(tool_choice="auto")` y `strict=True` OK. Streaming OK. El esquema con `Field(max_length=300)` en `RouteDecision.reason` fue aceptado por la API.
+  - `read_forum_post` hacía `ReadTimeout` desde el contenedor (httpx, imagen `python:3.12-slim`, OpenSSL 3.0.22) pero no desde el host: con TLS 1.3 y ALPN `http/1.1` www.odoo.com no responde; con TLS 1.2 responde en ~1 s. Diagnosticado aislando MTU, codificación y ALPN. Mitigación: contexto TLS limitado a 1.2 en el cliente del foro. Antes de la corrección, 2 lecturas con 3 intentos de 15 s cada una costaron 92 s en un solo turno.
+  - Un subgrafo con claves compartidas devuelve la lista del padre ampliada; con un reducer de lista simple se duplicaban los pasos. Resuelto con fusión por clave (`id` en steps, `(kind, n)` en sources).
+  - `GenericFakeChatModel` en streaming no conserva `tool_calls`; el fake de tests emite las llamadas en el último chunk.
+  - Los números de fuente externa siguen el registro de resultados (p. ej. `[6]`, `[9]`), no son contiguos; los marcadores del texto coinciden con `sources`.
+  - El generator a veces deja un `[1]` suelto en una línea; no es un marcador inválido, se evaluará en E-05.
+- **Decisiones y desviaciones:**
+  - Aprobado y aplicado: reducer con RESET por turno; grader por lote; `contextualize` pass-through sin historial; Haiku para `direct_answer`.
+  - Desviación: `effort` solo se pasa a router y grader; el resto no lo envía.
+  - Desviación: la recuperación de datos del turno anterior se evita con `Reset` en `contextualize`, que también limpia `research_messages` y `external_sources` (la conversación interna de herramientas no entra en `messages`, que solo guarda pregunta y respuesta final).
+  - `RESEARCH_MAX_ITERATIONS` cuenta llamadas al LLM de research: con 4 hay hasta 3 rondas de herramientas y la última llamada va sin tools y con instrucción de cerrar.
+  - Fallos del LLM no tumban el turno: router → `docs`, grader → fail-open (todos los chunks), rewriter → reutiliza la pregunta (el ciclo sigue acotado), contextualize → pregunta original.
+  - Fuentes externas: se listan las leídas (o, si no se leyó ninguna, las citadas); si no hay ninguna, la respuesta del LLM se descarta y se devuelve «no encontré…» (sin inventar, §8).
+  - `QueryResponse` mínima añadida a `schemas/api.py` porque el evento `final` la necesita; A-01 la completará en la Fase 3.
+  - Dependencias nuevas en `agent`: `langgraph`, `langgraph-checkpoint-postgres`, `psycopg[pool]`, `beautifulsoup4`, `lxml`. `mypy_path` incluye `services/agent/tests`.
+- **Evidencia (humo en vivo, precios de `pricing.py`):**
+  - `hola` → `direct`: contextualize > router > direct_answer; 3,9 s; 896 in / 174 out; $0,0002.
+  - `¿cómo defino un campo computado en el ORM?` → `docs`: contextualize > router > retriever (10) > grader (6 relevantes) > generator; 11,4 s (primer token a 6,3 s); 9.890 in / 1.458 out; $0,0179; 6 citas `[1]…[6]` válidas, cada una con `url#anchor` (p. ej. `…/08_compute_onchange.html#computed-fields`, `…/orm.html#computed-fields`).
+  - Seguimiento en el mismo `thread_id` desde otro proceso (memoria en Postgres): «¿y cómo hago que se pueda editar a mano?» → contextualize la reescribió a «¿Cómo hago que un campo computado en el ORM de Odoo 19 se pueda editar a mano?»; respuesta sobre `inverse` con 3 citas; 9,8 s; $0,0116.
+  - `¿Cómo puedo ejecutar en paralelo el cálculo de una nómina por lotes en Odoo 19?` → `research`: contextualize > router > confirm_external_search (pass-through) > research_llm > tools (2 búsquedas) > research_llm > tools (2 lecturas) > research_llm > finalize_external; 22,7 s; 9.555 in / 1.346 out; $0,0276; 2 posts del foro con enlace y el aviso de que son opiniones de comunidad y de versiones antiguas. ddgs no limitó la tasa en estas pruebas.
+- **Próximos pasos:** Fase 3: `routes_query` (`/query`, agrega eventos; `thread_id`), `routes_graph`, lifespan con `postgres_checkpointer` + `build_deps`, `mode=linear` (E-02), validación y Swagger, frontend v1. Pendientes menores: SearXNG (plan B) sigue sin implementar (`build_search_provider` lanza `NotImplementedError`); medir en E-05 si hace falta endurecer el generator contra marcadores sueltos.
 
 ### 2026-11-02 — Frontend: diseño y U-04
 - Hecho: mockup de Chat y Analytics (canvas https://claude.ai/artifact/13nBya1NJP4Yzf6LT2NVgo), aprobado por el usuario. Copia limpia del frontend base a `frontend/`, sin `.git`, `.env*`, `.vercel`, `vercel.json` ni `node_modules`. Branding BBVA eliminado: logo reemplazado por un ícono `</>` genérico, textos y preguntas sugeridas de Odoo 19, `lang="es"`. Tokens Tailwind 4 en `globals.css`; colores y grises claros mapeados a clases semánticas. `npm run build` OK; lint con 4 warnings de variables sin usar en el dashboard heredado (se reescribe en U-12).
