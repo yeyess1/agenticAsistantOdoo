@@ -20,13 +20,17 @@ def model_name_for(role: Role, settings: Settings) -> str:
 def get_chat_model(role: Role, settings: Settings | None = None) -> ChatAnthropic:
     """Build the chat model of a role. The model id comes from `LLM_MODEL_<ROLE>`.
 
-    The `effort` parameter for router/grader (D-03, V-k) is wired in Phase 2 after the
-    early check against `langchain-anthropic`.
+    Router and grader also get `effort` (D-03, V-k: sent as `output_config.effort`).
+    Structured outputs must use `method="json_schema"`: Sonnet 5.5 rejects a forced
+    `tool_choice` (V-k).
     """
     s = settings or get_settings()
+    effort = {"router": s.llm_effort_router, "grader": s.llm_effort_grader}.get(role)
     return ChatAnthropic(
         model=model_name_for(role, s),
         api_key=s.anthropic_api_key,
         max_retries=2,
         timeout=60.0,
+        max_tokens=4096,
+        effort=effort,
     )
