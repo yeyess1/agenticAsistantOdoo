@@ -44,7 +44,7 @@ class TEIEmbedder:
         model: str,
         dim: int,
         query_instruction: str,
-        timeout_s: float = 60.0,
+        timeout_s: float = 300.0,
         client: httpx.AsyncClient | None = None,
     ) -> None:
         self._model = model

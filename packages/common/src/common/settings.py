@@ -65,6 +65,8 @@ class Settings(BaseSettings):
     chunk_overlap_tokens: int = 64
     chunk_min_tokens: int = 100
 
+    tokenizer_cache_dir: str = "~/.cache/odoo-rag/tokenizers"
+
     # --- Agent limits ---------------------------------------------------------------------
     retriever_top_k: int = 10
     max_rewrites: int = 2
