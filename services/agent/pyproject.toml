@@ -1,7 +1,7 @@
 [project]
 name = "odoo-rag-agent"
 version = "0.1.0"
-description = "Agent service (FastAPI + LangGraph). Skeleton: implemented in Phase 2/3."
+description = "Agent service (FastAPI + LangGraph): /search now, graph in Phases 2-3."
 requires-python = ">=3.12"
 dependencies = [
     "odoo-rag-common",

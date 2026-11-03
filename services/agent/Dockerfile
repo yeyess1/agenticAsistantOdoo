@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# agent: FastAPI + LangGraph (skeleton; app code arrives in Phase 2/3)
+# agent: FastAPI + LangGraph (Phase 1: /search and /health; graph arrives in Phase 2/3)
 # Build (see compose.yaml): context = ./services/agent; additional contexts:
 #   common    = ./packages/common   (shared library, COPY --from=common)
 #   workspace = .                   (uv.lock + pyproject files only, via bind mounts)
