@@ -1,7 +1,7 @@
 # Odoo 19 agentic RAG - Docker Compose (D-10).
 # Services: postgres, qdrant, embeddings (TEI), init, ingestion, agent, frontend.
 # `docker compose up` brings everything up; the UI is http://127.0.0.1:3000 (only port
-# published by the base file). The eval runner arrives as a profile in Phase 4.
+# published by the base file). The eval runner is the `eval` profile (`make eval`).
 # Secrets live in .env (never here). `${VAR:-x}` defaults are dev-only.
 name: odoo-rag
 
@@ -178,6 +178,27 @@ services:
       agent:
         condition: service_healthy
       ingestion:
+        condition: service_healthy
+
+  eval:
+    # Evaluation runner (Phase 4, E-13): only with `--profile eval` (`make eval`). Runs in
+    # the internal network (agent, Qdrant and TEI are not published by the base file).
+    profiles: [eval]
+    build:
+      context: ./eval
+      additional_contexts:
+        common: ./packages/common
+        workspace: .
+    env_file: .env
+    environment:
+      GIT_SHA: ${GIT_SHA:-unknown}
+    # Writes to the ./eval/reports bind mount: run as the host user (dev-only default 1000).
+    user: "${EVAL_UID:-1000}:${EVAL_GID:-1000}"
+    volumes:
+      - ./eval/reports:/app/eval/reports
+    restart: "no"
+    depends_on:
+      agent:
         condition: service_healthy
 
 volumes:

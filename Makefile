@@ -21,8 +21,10 @@ up-gpu: env ## Same as `up` with TEI on GPU (NVIDIA Container Toolkit required)
 seed: ## Ingest the corpus snapshot through POST /documents (FORCE=1 reindexes unchanged docs)
 	$(COMPOSE) exec ingestion python -m ingestion.seed /data/corpus/odoo19-dev $(if $(FORCE),--force)
 
-eval: ## Run the evaluation, `eval` profile (available from Phase 4)
-	$(COMPOSE) --profile eval run --rm eval
+eval: ## Run the evaluation (`eval` profile, E-13); ARGS="--only q01,q28" to select items
+	GIT_SHA=$$(git rev-parse --short HEAD 2>/dev/null || echo unknown) EVAL_UID=$$(id -u) EVAL_GID=$$(id -g) \
+		$(COMPOSE) --profile eval run --rm --build eval $(ARGS)
+	cp eval/reports/dashboard.json frontend/public/eval/latest.json
 
 test: ## Python tests
 	uv run pytest

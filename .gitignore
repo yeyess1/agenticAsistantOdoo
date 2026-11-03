@@ -27,3 +27,4 @@ node_modules/
 # Local data
 eval/reports/*.json
 !eval/reports/.gitkeep
+eval/reports/*.md

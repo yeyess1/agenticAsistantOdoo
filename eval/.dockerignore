@@ -1,0 +1,6 @@
+.dockerignore
+Dockerfile
+reports
+tests
+**/__pycache__
+**/*.py[cod]
