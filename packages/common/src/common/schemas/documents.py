@@ -6,13 +6,15 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 DocumentStatus = Literal["processing", "indexed", "failed"]
 IngestAction = Literal["created", "updated", "unchanged"]
 
 
 class DocumentOut(BaseModel):
+    model_config = ConfigDict(json_schema_serialization_defaults_required=True)
+
     doc_id: UUID
     name: str
     source: str

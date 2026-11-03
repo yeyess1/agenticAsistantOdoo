@@ -318,7 +318,7 @@ async def test_node_finished_reports_usage_and_cost() -> None:
     assert fin.model == "claude-haiku-5-5"
     assert abs(fin.usage.cost_usd - (1000 * 0.10 + 100 * 0.50) / 1e6) < 1e-12
     r = final(events)
-    assert r.input_tokens == 1000 and r.cost_usd > 0
+    assert r.usage.input_tokens == 1000 and r.usage.cost_usd > 0
 
 
 # --- D-08 / S-06: memory per thread and follow-up contextualization -------------------------------

@@ -12,14 +12,9 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, Field
 
 from common.schemas.api import QueryResponse, SourceRef
+from common.schemas.api import Usage as Usage  # re-exported for the nodes
 
 AgentName = Literal["supervisor", "docs", "research"]
-
-
-class Usage(BaseModel):
-    input_tokens: int = 0
-    output_tokens: int = 0
-    cost_usd: float = 0.0
 
 
 class EventBase(BaseModel):
