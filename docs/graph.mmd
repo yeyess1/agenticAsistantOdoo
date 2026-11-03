@@ -1,0 +1,50 @@
+---
+config:
+  flowchart:
+    curve: linear
+---
+graph TD;
+	__start__([<p>__start__</p>]):::first
+	contextualize(contextualize)
+	router(router)
+	direct_answer(direct_answer)
+	confirm_external_search(confirm_external_search)
+	research_llm(research_llm)
+	tools(tools)
+	finalize_external(finalize_external)
+	__end__([<p>__end__</p>]):::last
+	__start__ --> contextualize;
+	confirm_external_search -.-> direct_answer;
+	confirm_external_search -.-> research_llm;
+	contextualize --> router;
+	docs_agent\3a__end__ -.-> __end__;
+	docs_agent\3a__end__ -.-> confirm_external_search;
+	research_llm -.-> finalize_external;
+	research_llm -.-> tools;
+	router -. &nbsp;research&nbsp; .-> confirm_external_search;
+	router -. &nbsp;direct&nbsp; .-> direct_answer;
+	router -. &nbsp;docs&nbsp; .-> docs_agent\3a__start__;
+	tools --> research_llm;
+	direct_answer --> __end__;
+	finalize_external --> __end__;
+	subgraph docs_agent
+	docs_agent\3a__start__(<p>__start__</p>)
+	docs_agent\3aretriever(retriever)
+	docs_agent\3agrader(grader)
+	docs_agent\3agenerator(generator)
+	docs_agent\3arewriter(rewriter)
+	docs_agent\3ano_context(no_context)
+	docs_agent\3a__end__(<p>__end__</p>)
+	docs_agent\3a__start__ --> docs_agent\3aretriever;
+	docs_agent\3agrader -.-> docs_agent\3agenerator;
+	docs_agent\3agrader -.-> docs_agent\3ano_context;
+	docs_agent\3agrader -.-> docs_agent\3arewriter;
+	docs_agent\3aretriever --> docs_agent\3agrader;
+	docs_agent\3arewriter --> docs_agent\3aretriever;
+	docs_agent\3agenerator --> docs_agent\3a__end__;
+	docs_agent\3ano_context --> docs_agent\3a__end__;
+	end
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc
+

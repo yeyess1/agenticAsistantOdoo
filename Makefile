@@ -2,7 +2,7 @@
 COMPOSE      ?= docker compose
 COMPOSE_GPU  ?= docker compose -f compose.yaml -f compose.override.yaml -f compose.gpu.yaml
 
-.PHONY: help env up up-gpu seed eval test lint fmt down logs ps
+.PHONY: help env up up-gpu seed eval test lint graph fmt down logs ps
 
 help: ## List targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-8s %s\n", $$1, $$2}'
@@ -31,6 +31,9 @@ lint: ## ruff (lint + format check) and mypy
 	uv run ruff check .
 	uv run ruff format --check .
 	uv run mypy packages infra services eval
+
+graph: ## Export the agent graph as Mermaid to docs/graph.mmd (compare with ARCHITECTURE section 3.1)
+	uv run python scripts/export_graph.py
 
 fmt: ## Auto-format and fix
 	uv run ruff format .

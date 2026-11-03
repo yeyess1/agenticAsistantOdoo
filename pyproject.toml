@@ -58,6 +58,7 @@ mypy_path = [
     "services/agent/src",
     "services/ingestion/src",
     "services/ingestion/tests",
+    "services/agent/tests",
     "infra/init",
 ]
 
@@ -80,6 +81,7 @@ testpaths = [
     "packages/common/tests",
     "infra/init/tests",
     "services/ingestion/tests",
+    "services/agent/tests",
     "services/agent/tests",
 ]
 addopts = "-ra"
