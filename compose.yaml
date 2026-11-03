@@ -1,6 +1,6 @@
 # Odoo 19 agentic RAG - Docker Compose (D-10).
-# Phase 0 services: postgres, qdrant, embeddings (TEI), init. The app services
-# (agent, ingestion, frontend, eval) are added by later phases.
+# Services: postgres, qdrant, embeddings (TEI), init (Phase 0); ingestion and agent
+# (Phase 1). frontend and eval are added by later phases.
 # Secrets live in .env (never here). `${VAR:-x}` defaults are dev-only.
 name: odoo-rag
 
@@ -49,6 +49,14 @@ services:
       - ${EMBEDDINGS_MODEL:-Qwen/Qwen3-Embedding-0.6B}
       - --port
       - "80"
+      # Default 16384 batch tokens OOM-kills TEI on CPU during warm-up (~12 GB RSS,
+      # attention is quadratic). Chunks are ~512 tokens (D-06); 4096 leaves room for
+      # long uncut code blocks.
+      - --max-batch-tokens
+      - "4096"
+      # Qwen3 max_input_length (32768) > --max-batch-tokens: TEI refuses to start
+      # without truncation. Only inputs above 4096 tokens are truncated.
+      - --auto-truncate
     environment:
       # Passed through only if set in .env (an empty token must not reach TEI).
       - HF_TOKEN
@@ -79,6 +87,70 @@ services:
       postgres:
         condition: service_healthy
       qdrant:
+        condition: service_healthy
+
+  ingestion:
+    # Upload / list / delete documents; parsing, chunking, embeddings, Qdrant upsert (I-01…I-07).
+    build:
+      context: ./services/ingestion
+      additional_contexts:
+        common: ./packages/common
+        workspace: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Writable cache for the Qwen3 tokenizer (downloaded once from Hugging Face).
+      TOKENIZER_CACHE_DIR: /data/documents/tokenizers
+    volumes:
+      - documents-data:/data/documents
+      - ./data/corpus:/data/corpus:ro
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8001/health', timeout=4)"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      embeddings:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  agent:
+    # Phase 1: /search (pure retrieval) and /health. The query graph arrives in Phases 2-3.
+    build:
+      context: ./services/agent
+      additional_contexts:
+        common: ./packages/common
+        workspace: .
+    restart: unless-stopped
+    env_file: .env
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=4)"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      embeddings:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
 
 volumes:

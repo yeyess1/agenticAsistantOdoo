@@ -12,16 +12,14 @@ env: ## Create .env from .env.example if missing
 
 up: env ## Build and start the stack (TEI on CPU), wait for init and healthy datastores
 	$(COMPOSE) up -d --build
-	$(COMPOSE) wait init
-	$(COMPOSE) up -d --no-build --wait postgres qdrant embeddings
+	$(COMPOSE) up -d --no-build --wait postgres qdrant embeddings ingestion agent
 
 up-gpu: env ## Same as `up` with TEI on GPU (NVIDIA Container Toolkit required)
 	$(COMPOSE_GPU) up -d --build
-	$(COMPOSE_GPU) wait init
-	$(COMPOSE_GPU) up -d --no-build --wait postgres qdrant embeddings
+	$(COMPOSE_GPU) up -d --no-build --wait postgres qdrant embeddings ingestion agent
 
-seed: ## Ingest the corpus snapshot through the ingestion endpoint (available from Phase 1)
-	$(COMPOSE) exec ingestion python -m ingestion.seed /data/corpus/odoo19-dev
+seed: ## Ingest the corpus snapshot through POST /documents (FORCE=1 reindexes unchanged docs)
+	$(COMPOSE) exec ingestion python -m ingestion.seed /data/corpus/odoo19-dev $(if $(FORCE),--force)
 
 eval: ## Run the evaluation, `eval` profile (available from Phase 4)
 	$(COMPOSE) --profile eval run --rm eval
