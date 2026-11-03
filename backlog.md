@@ -5,20 +5,24 @@ Asistente agéntico de conocimiento para desarrolladores (RAG orquestado como gr
 
 ## Estado actual (handoff entre sesiones)
 
-> Actualizado 2026-11-02 (noche, tras la Fase 2). Leer esto primero al retomar una sesión nueva.
+> Actualizado 2026-11-02 (noche, tras la Fase 3). Leer esto primero al retomar una sesión nueva.
 
 - **Fase de decisiones:** cerrada (D-01…D-14). Diseño en `docs/ARCHITECTURE.md`, aprobado.
 - **Fase 0 (Fundación):** cerrada, incluida F-07: CI en verde en GitHub. Repo: https://github.com/yeyess1/agenticAsistantOdoo (push con la cuenta gh `yeyess1`; la activa por defecto, `yeiCastordata`, no tiene permiso de push).
 - **Fase 1 (Ingesta + vector):** hecha y verificada con el stack real. `make up` levanta también `ingestion` (:8001) y `agent` (:8000, solo `/search` y `/health`), ambos en healthy. `make seed` indexó 59 archivos (58 MD + 1 PDF) = 832 puntos en Qdrant = 59 filas `indexed` en Postgres. Re-seed idempotente (59 unchanged, 6 s). ruff, mypy, pytest (60) y pre-commit en verde.
   - ✅ Hechas: I-01…I-12, V-01…V-03, A-07. ⬜ V-04 queda para la Fase 4.
-- **Cambios sin commitear:** el trabajo de la Fase 2 (más lo pendiente de las anteriores, si lo hubiera) está en el árbol de trabajo. Se borró `scripts/.gitkeep` (ya hay `make_pdf.sh`). El corpus (`data/corpus/odoo19-dev`, ~1,1 MB + PDF 1,3 MB) debe ir en un commit propio.
+- **Cambios sin commitear:** el trabajo de la Fase 3 está en el árbol de trabajo (la Fase 2 ya está commiteada en local). El corpus ya está versionado. `eval/golden/` sigue sin commitear (borrador del golden set pendiente de revisión).
 - **Ojo:** el seed completo tarda ~36 min con TEI en CPU (~2,6 s por chunk). Re-ejecutarlo con `FORCE=1` repite esa espera. `/search` responde en ~0,3 s.
 - **Nota de entorno:** comandos Docker con `sg docker -c "..."` solo si la sesión arrancó antes de entrar al grupo `docker`. Sin `docker buildx`; `docker compose build` funciona. `frontend/.next/` y `node_modules/` quedan excluidos en `.gitleaks.toml`.
 - **Frontend (adelantado):** U-04 hecho (copia limpia + paleta morado tipo Odoo `#714B67`). Golden set (E-01) en redacción en `eval/golden/golden_set.yaml`.
 - **Fase 2 (Grafo agéntico):** hecha y verificada (2026-11-02, noche). Grafo LangGraph en `services/agent/src/agent/graph/` (`build_graph(deps, checkpointer)`), herramientas del foro en `agent/tools/`, eventos tipados en `common/schemas/events.py` + `agent/events.py` (`stream_events`). Diagrama exportado a `docs/graph.mmd` (`make graph`) y verificado contra §3.1. 88 tests; ruff, mypy y pre-commit en verde. Humo en vivo con Anthropic + TEI + Qdrant + Postgres: docs, direct, research y seguimiento con memoria en Postgres. V-k cerrada (ver §16 de ARCHITECTURE).
   - ✅ Hechas: S-01…S-07, R-01…R-07, X-01…X-04, A-06. Sin endpoint `/query` aún (Fase 3: A-01…A-05, SSE, `mode=linear`).
   - **Ojo:** `read_forum_post` necesita TLS 1.2 contra www.odoo.com desde la imagen `python:3.12-slim` (con TLS 1.3 + ALPN `http/1.1` el servidor no responde); ya está aplicado en `forum_ssl_context()`.
-- **Siguiente paso:** Fase 3 (API `/query`, `routes_graph`, frontend v1: A-01…A-05, E-02, U-01…U-13, C-02, C-03, C-06). El checkpointer de producción: `postgres_checkpointer(settings)` en `agent/graph/checkpointer.py` (las tablas las crea `init`).
+- **Fase 3 (API + frontend v1):** hecha y verificada (2026-11-02, noche). `docker compose up` levanta los 7 servicios en healthy; UI en http://127.0.0.1:3000 (proxy `/api/agent/*`, `/api/ingestion/*`, `/api/health`). Agent: `POST /query`, `/query/stream` (SSE), `/query/resume` (HITL), `mode=linear` (E-02, `agent/linear.py`), Swagger en `:8000/docs` y `:8001/docs` (override de dev). Frontend: chat con SSE (U-10 adelantado), Markdown + resaltado, citas `[n]` → tarjetas, badge + timeline, panel de documentos, tipos generados (`make openapi`). 101 tests; gates Python, `npm run build` y `npm run lint` (0 errores) en verde.
+  - ✅ Hechas: A-01…A-05, E-02, U-01…U-03, U-05…U-10, U-13, C-02, C-03, C-06, O-C. 🔄 O-D (falta U-11). ⬜ U-12 (Fase 4), modo oscuro propio.
+  - **Ojo:** al cambiar esquemas de la API hay que correr `make openapi` (regenera `frontend/openapi/*.json` y `src/lib/api/*.gen.ts`) y reconstruir el frontend. `tsc --noEmit` en limpio necesita antes `npx next typegen` (helper `RouteContext`).
+  - Capturas de la UI con respuesta real: en el scratchpad de la sesión (no versionadas).
+- **Siguiente paso:** Fase 4 (evaluación): `mode=linear` vs `agentic` en `/query` ya disponible para E-05; revisar el golden set (`eval/golden/`, borrador sin commitear).
 - **Entorno:** RTX 4060 Laptop de 8 GB, sin NVIDIA Container Toolkit (TEI en CPU por defecto; `make up-gpu` sin probar); 15 GB de RAM; uv 0.13.6, Compose 2.40, Node 22.
 
 ## Leyenda
@@ -147,11 +151,11 @@ Asistente agéntico de conocimiento para desarrolladores (RAG orquestado como gr
 
 | ID | Tipo | Tarea | Estado | Prioridad | Decisión / Contexto |
 |---|---|---|---|---|---|
-| A-01 | OBL | Endpoint de consulta en lenguaje natural | ⬜ Por hacer | P0 | |
-| A-02 | OBL | Memoria conversacional por `thread_id` | ⬜ Por hacer | P0 | |
-| A-03 | OBL | Respuesta con: agente que respondió, nodos recorridos, fuentes | ⬜ Por hacer | P0 | |
-| A-04 | OBL | Manejo de errores y validación de esquemas (OpenAPI/Swagger) | ⬜ Por hacer | P1 | |
-| A-05 | OBL | Health checks | ⬜ Por hacer | P2 | |
+| A-01 | OBL | Endpoint de consulta en lenguaje natural | ✅ Hecho | P0 | `api/routes_query.py`: `POST /query` (REST, agrega eventos → `QueryResponse`), `POST /query/stream` (SSE) y `POST /query/resume` (HITL); verificado vía proxy del frontend |
+| A-02 | OBL | Memoria conversacional por `thread_id` | ✅ Hecho | P0 | `AsyncPostgresSaver` abierto en el lifespan (`AsyncExitStack`); `thread_id` opcional (el servidor genera uuid4); seguimiento en vivo reescrito por `contextualize` |
+| A-03 | OBL | Respuesta con: agente que respondió, nodos recorridos, fuentes | ✅ Hecho | P0 | `QueryResponse`: `answered_by`, `route`, `delegated`, `external`, `nodes`, `steps`, `sources` (url#anchor/page, `cited`), `usage` {tokens, costo}, `latency_ms`, `run_id`, `mode` |
+| A-04 | OBL | Manejo de errores y validación de esquemas (OpenAPI/Swagger) | ✅ Hecho | P1 | Pydantic (`QueryRequest`: pregunta 1..4000, `thread_id` con patrón, `mode`); 422 de FastAPI; 502/504/404 tipados `{"detail": {"error": {code, message}}}` (`ErrorResponse` en OpenAPI); Swagger en `/docs` de agent e ingestion |
+| A-05 | OBL | Health checks | ✅ Hecho | P2 | `/health` de agent e ingestion (qdrant, postgres, embeddings) + `/api/health` del frontend; los tres en el healthcheck de Compose |
 | A-06 | OBL | Modelo de eventos tipado (Pydantic): `node_started`, `node_finished`, `token`, `sources`, `interrupt`, `final`; REST agrega eventos | ✅ Hecho | P0 | D-13; base de A-03 y reto C; `common/schemas/events.py` (+ `QueryResponse`, `SourceRef`, `StepRecord` en `api.py`); los nodos emiten con `get_stream_writer`, `agent/events.py` sella `run_id/thread_id/seq/ts`; `error` incluido. Faltan solo los consumidores REST/SSE (Fase 3) |
 | A-07 | OBL | Endpoint `/search` (recuperación pura, filtros, top-k) | ✅ Hecho | P0 | D-13; usado por eval (recall@k) y reto A; `POST /search` en agent (top_k, filters, exact, hnsw_ef, with_instruction); devuelve section, url#anchor, page |
 | A-08 | OBL | Interfaces en `packages/common`: `Embedder`, `Retriever` (`DenseRetriever`), `Reranker` (no-op), `SearchProvider`, LLM por rol; selección por `.env` | ✅ Hecho | P0 | D-13; `Embedder`/`TEIEmbedder`, `Retriever`/`DenseRetriever`, `Reranker`/`NoopReranker`, `SearchProvider`/`DdgsProvider`, `get_chat_model(role)`; tests con respx y Qdrant en memoria |
@@ -162,26 +166,26 @@ Asistente agéntico de conocimiento para desarrolladores (RAG orquestado como gr
 
 | ID | Tipo | Tarea | Estado | Prioridad | Decisión / Contexto |
 |---|---|---|---|---|---|
-| U-01 | OBL | Chat funcional contra la API | ⬜ Por hacer | P0 | |
-| U-02 | OBL | Carga de documentos desde la UI | ⬜ Por hacer | P0 | |
-| U-03 | OBL | Mostrar fuentes citadas, agente que respondió y pasos recorridos | ⬜ Por hacer | P0 | |
+| U-01 | OBL | Chat funcional contra la API | ✅ Hecho | P0 | `components/chat/ChatApp.tsx` vía proxy `/api/agent/*`; `thread_id` en estado del cliente + «Nueva conversación»; toggle Agéntico/Lineal; reintento en error |
+| U-02 | OBL | Carga de documentos desde la UI | ✅ Hecho | P0 | Dropzone (arrastrar o elegir) PDF/MD/TXT ≤20 MB con validación previa y progreso (XHR) → «Indexando…» |
+| U-03 | OBL | Mostrar fuentes citadas, agente que respondió y pasos recorridos | ✅ Hecho | P0 | Ver U-07/U-08; captura con respuesta real en la bitácora de la Fase 3 |
 | U-04 | OBL | Copia limpia del frontend base a `frontend/` (sin `.git`, `.env`, `.vercel`, `node_modules`, `tsconfig.tsbuildinfo`) + rebranding total (eliminar marca BBVA) + tema propio | ✅ Hecho | P0 | D-09, fase v1. Copia limpia (sin `.git`, `.env*`, `.vercel`, `vercel.json`, `node_modules`, `tsbuildinfo`); 0 referencias a BBVA. Tokens en `src/app/globals.css`: blanco + morado tipo Odoo `#714B67` (solo el color, sin logo ni nombre), teal `#016A6F` para el agente de investigación; IBM Plex Sans + JetBrains Mono. Mockup aprobado: https://claude.ai/artifact/13nBya1NJP4Yzf6LT2NVgo. `npm run build` OK. Pendiente: modo oscuro propio; cliente API (Fase 3) |
-| U-05 | OBL | Tipos TS generados desde OpenAPI de FastAPI (`openapi-typescript`) | ⬜ Por hacer | P1 | Contrato primero |
-| U-06 | OBL | Render Markdown + bloques de código con resaltado (`react-markdown`, `remark-gfm`, resaltador) | ⬜ Por hacer | P0 | Fase v1 |
-| U-07 | OBL | Citas: tarjetas (documento, sección, enlace) + marcadores `[n]` en el texto | ⬜ Por hacer | P0 | Fase v1 |
-| U-08 | OBL | Badge de agente + timeline de nodos recorridos | ⬜ Por hacer | P0 | Fase v1 |
-| U-09 | OBL | Panel de documentos: carga, listado, eliminación | ⬜ Por hacer | P0 | Fase v1 |
-| U-10 | OPC | Cliente SSE (`fetch` + ReadableStream, máquina de estados de eventos) | ⬜ Por hacer | P1 | Fase v2, reto C |
+| U-05 | OBL | Tipos TS generados desde OpenAPI de FastAPI (`openapi-typescript`) | ✅ Hecho | P1 | Contrato primero; `scripts/export_openapi.py` → `frontend/openapi/*.json` → `src/lib/api/{agent,ingestion}.gen.ts` (`npm run gen:api:full` o `make openapi`); cliente tipado en `lib/api/client.ts` |
+| U-06 | OBL | Render Markdown + bloques de código con resaltado (`react-markdown`, `remark-gfm`, resaltador) | ✅ Hecho | P0 | Fase v1; `react-markdown` 10 + `remark-gfm` + `rehype-highlight` (highlight.js) con tema de tokens propio; cabecera con lenguaje y botón «Copiar» |
+| U-07 | OBL | Citas: tarjetas (documento, sección, enlace) + marcadores `[n]` en el texto | ✅ Hecho | P0 | Fase v1; `[n]` fuera de código → enlace a la tarjeta (solo números válidos); tarjetas con documento, sección, `url#anchor` o página |
+| U-08 | OBL | Badge de agente + timeline de nodos recorridos | ✅ Hecho | P0 | Fase v1; badge docs (morado) / research (teal) / directa (neutro) + «RAG lineal» y «Delegada»; `<details>` «Pasos del grafo» con nodo, detalle legible, duración y modelo |
+| U-09 | OBL | Panel de documentos: carga, listado, eliminación | ✅ Hecho | P0 | Fase v1; `components/documents/DocumentsPanel.tsx`: totales, filtro, badge de tipo, chunks, eliminar con confirmación |
+| U-10 | OPC | Cliente SSE (`fetch` + ReadableStream, máquina de estados de eventos) | ✅ Hecho | P1 | Fase v2, reto C; `lib/api/sse.ts` + reductor `applyEvent` en `ChatApp`: pasos en vivo y tokens del generator/direct/research; `final` = mismo `QueryResponse` que REST. Sin tarjeta HITL (U-11) |
 | U-11 | OPC | Tarjeta de confirmación HITL (aprobar/rechazar `interrupt`) | ⬜ Por hacer | P2 | Fase v2, reto D |
 | U-12 | OBL | Adaptar dashboard `/analytics`: resultados de eval (lineal vs agéntico, precisión supervisor, recall HNSW, ES vs EN), latencia/tokens/costo | ⬜ Por hacer | P1 | Fase v3; diferencial visual |
-| U-13 | OBL | Dockerfile frontend con `output: "standalone"` | ⬜ Por hacer | P1 | C-01 |
+| U-13 | OBL | Dockerfile frontend con `output: "standalone"` | ✅ Hecho | P1 | C-01; `node:22.21.1-alpine3.22`, `deps → build → runtime`, cache mount de npm, uid 10001, solo `.next/standalone` + `static` + `public`; imagen 306 MB |
 
 ## 9. Req. 8 — Evaluación y justificación de lo agéntico
 
 | ID | Tipo | Tarea | Estado | Prioridad | Decisión / Contexto |
 |---|---|---|---|---|---|
 | E-01 | OBL | Golden set: ≥10 preguntas con respuesta esperada (cubiertas / no cubiertas / fuera de alcance) | ⬜ Por hacer | P0 | Único conjunto etiquetado (no hay entrenamiento; el corpus indexado no se etiqueta). Etiquetas por pregunta: respuesta esperada, secciones/chunks relevantes (para recall/precision de recuperación, V-04 y E-09), agente esperado (precisión del supervisor) |
-| E-02 | OBL | Implementar RAG lineal baseline (recuperar → generar) | ⬜ Por hacer | P0 | |
+| E-02 | OBL | Implementar RAG lineal baseline (recuperar → generar) | ✅ Hecho | P0 | `agent/linear.py`: mismos nodos `retriever` y `generator` (prompt, modelo, citas), sin memoria; `mode=linear` en `/query` → `nodes=[retriever, generator]` |
 | E-03 | OBL | Script de evaluación: faithfulness, answer relevancy, context precision | ⬜ Por hacer | P0 | D-12: módulo propio `eval/metrics/`; prompts del juez en `eval/prompts/` |
 | E-10 | OBL | Answer correctness (F1 de afirmaciones vs respuesta esperada, juez Opus 5.5) | ⬜ Por hacer | P1 | D-12 |
 | E-11 | OBL | Tests unitarios de métricas deterministas (context precision, recall@k, precision@k, MRR, routing accuracy) | ⬜ Por hacer | P1 | D-12; calidad de código |
@@ -199,11 +203,11 @@ Asistente agéntico de conocimiento para desarrolladores (RAG orquestado como gr
 | ID | Tipo | Tarea | Estado | Prioridad | Decisión / Contexto |
 |---|---|---|---|---|---|
 | C-01 | OBL | Dockerfile multi-stage por servicio | ✅ Hecho | P0 | Dockerfiles de init, agent e ingestion (esqueletos, multi-stage `deps`→`build`→`runtime`, no-root). Build real OK de init, agent e ingestion (~520–550 MB, uid 10001, `common` importable). Frontend en U-13 |
-| C-02 | OBL | Docker Compose: todo con un solo comando | ⬜ Por hacer | P0 | |
-| C-03 | OBL | Variables/secretos por `.env`; prueba en máquina limpia | ⬜ Por hacer | P0 | |
+| C-02 | OBL | Docker Compose: todo con un solo comando | ✅ Hecho | P0 | `frontend` en `compose.yaml` (healthcheck `/api/health`, `depends_on` agent/ingestion healthy, `127.0.0.1:${FRONTEND_PORT:-3000}`); `docker compose up` levanta los 7 servicios |
+| C-03 | OBL | Variables/secretos por `.env`; prueba en máquina limpia | ✅ Hecho | P0 | Simulada: copia limpia + `.env` con solo la key, proyecto `odoo-rag-clean` en el puerto 3100 → todo healthy en 2 min 52 s y consulta OK; luego `down -v` de ese proyecto (detalle en la bitácora de la Fase 3). Repetir en otra máquina en ENT-09 |
 | C-04 | OBL | Servicio `init` one-shot: tablas Postgres + colección Qdrant + payload indexes antes de ingestar | ✅ Hecho | P0 | D-10; garantiza regla D-05; `infra/init/bootstrap.py` + `common.qdrant_repo.ensure_collection` (tests con Qdrant en memoria). Contra servicios reales: crea colección (dense 1024 Cosine, HNSW m=16/ef_construct=200, sparse IDF, metadata modelo/dim) + 5 payload indexes; sale con 0; idempotente («already present» al re-ejecutar) |
 | C-05 | OBL | Healthchecks (pg_isready, Qdrant `/readyz`, TEI `/health`, servicios Python vía `python -c`) + `depends_on: service_healthy` | ✅ Hecho | P0 | Verificar curl en imágenes; sidecar si falta; Healthchecks en compose; Qdrant y TEI vía `bash /dev/tcp` (V-e verificado: Qdrant y TEI traen bash; los cuatro healthy con `make up`). Healthchecks `python -c` de agent/ingestion llegan con esos servicios |
-| C-06 | OBL | `compose.gpu.yaml` (TEI GPU + reserva de dispositivo) y `compose.override.yaml` (dev, `develop.watch`, Qdrant en loopback) | ⬜ Por hacer | P1 | D-10 |
+| C-06 | OBL | `compose.gpu.yaml` (TEI GPU + reserva de dispositivo) y `compose.override.yaml` (dev, `develop.watch`, Qdrant en loopback) | ✅ Hecho | P1 | D-10; `develop.watch` (`rebuild`) en agent/ingestion/frontend + `make watch`; GPU sigue sin probar (sin NVIDIA Container Toolkit) |
 | C-07 | OBL | `additional_contexts` para `packages/common` en builds de agent/ingestion/init | ✅ Hecho | P0 | Verificar Compose ≥ 2.17; `additional_contexts` `common` y `workspace` en `init`; `docker compose config` OK. Build real OK de init, agent e ingestion (Compose 2.40; el host no tiene `buildx`, el builder de Compose sí soporta `additional_contexts`) |
 
 ## 11. Retos opcionales (bonus hasta +15%)
@@ -214,8 +218,8 @@ Mejor uno bien hecho que varios a medias. Priorizar según D-01.
 |---|---|---|---|---|---|---|
 | O-A | OPC | A. Servidor MCP (≥2 tools: `search_docs`, `ingest_document`) + demo con cliente MCP | Baja–media | ⬜ Por hacer | Capa de servicios reutilizable por API y MCP | |
 | O-B | OPC | B. Búsqueda híbrida (vector + BM25) + reranker, con mejora medida en eval | Media | ⬜ Por hacer | Retriever intercambiable tras interfaz | |
-| O-C | OPC | C. Streaming SSE/WebSocket de respuesta y pasos | Baja | ⬜ Por hacer | Ejecución del grafo con `astream` | |
-| O-D | OPC | D. Human-in-the-loop (confirmar eliminar doc / búsqueda externa) | Baja–media | ⬜ Por hacer | Checkpointer + interrupts del grafo | |
+| O-C | OPC | C. Streaming SSE/WebSocket de respuesta y pasos | Baja | ✅ Hecho | Ejecución del grafo con `astream` | Adelantado en la Fase 3: `POST /query/stream` (eventos §5.3) + cliente U-10; el proxy del frontend reenvía sin buffer (verificado con marcas de tiempo) |
+| O-D | OPC | D. Human-in-the-loop (confirmar eliminar doc / búsqueda externa) | Baja–media | 🔄 En curso | Checkpointer + interrupts del grafo | Backend listo: `interrupt` en `confirm_external_search` + `POST /query/resume` (404 sin interrupt pendiente), probado con fakes. Falta U-11 (tarjeta) y la demo con `HITL_ENABLED=true` |
 | O-E | OPC | E. Observabilidad (Langfuse/LangSmith/Phoenix/OTel): latencia, tokens, costo | Baja | ⬜ Por hacer | Callbacks/handlers configurables por entorno | |
 | O-F | OPC | F. Ingesta incremental: detección de duplicados y modificados (hash) | Baja | ⬜ Por hacer | Hash de contenido en metadatos desde el inicio | |
 
@@ -575,6 +579,41 @@ Entradas cronológicas (más reciente arriba). Plantilla:
 - Decisiones tomadas (ref. D-XX):
 - Próximos pasos:
 ```
+
+### 2026-11-02 — Fase 3: API + frontend v1
+- **Hecho:**
+  - API del agent (`api/routes_query.py`): `POST /query` agrega los eventos de `stream_events` en `QueryResponse` (ahora con `run_id`, `mode`, `external`, `usage` {input_tokens, output_tokens, cost_usd} e `interrupt`); `POST /query/stream` reenvía los eventos tipados como SSE (`event: <type>` + `data: <json>`); `POST /query/resume` reanuda un `interrupt` HITL (404 tipado si no hay). `main.py` con `create_app()` y lifespan que abre `postgres_checkpointer` (D-08), `build_deps`, el grafo agéntico y el lineal. Errores: 422 de validación, 502/504 con código estable (`classify_error`: `llm_unavailable`, `retrieval_unavailable`, `upstream_timeout`, `graph_failed`), `ErrorResponse` documentado en OpenAPI.
+  - E-02: `agent/linear.py` = `retriever → generator` con los mismos nodos (mismo prompt, modelo y post-proceso de citas), sin checkpointer; un nodo interno sin traza pasa todo lo recuperado al generator.
+  - Esquemas: `QueryRequest`, `ResumeRequest`, `PendingInterrupt`, `Usage` (movido a `schemas/api.py`, re-exportado en `events.py`), `ErrorResponse`. Los modelos de respuesta usan `json_schema_serialization_defaults_required` para que los campos con default salgan obligatorios en los tipos TS.
+  - Frontend v1 según el mockup aprobado: proxy `app/api/[service]/[...path]/route.ts` (URL en runtime, cuerpo en streaming en ambos sentidos, cabeceras hop-by-hop fuera, 502 tipado si el upstream no responde) y `app/api/health`; tipos generados (`scripts/export_openapi.py` → `frontend/openapi/*.json` → `src/lib/api/*.gen.ts`, `npm run gen:api:full` / `make openapi`); cliente `lib/api/client.ts` y SSE `lib/api/sse.ts`; componentes `chat/` (Header, Composer con toggle Agéntico/Lineal como radiogroup con flechas, Markdown con `rehype-highlight` y «Copiar», `[n]` enlazados a tarjetas, AgentBadge, StepsTimeline, PendingMessage en vivo) y `documents/DocumentsPanel`. Se borraron `components/Chat.tsx` y `lib/api.ts` heredados; `/analytics` intacto (U-12, Fase 4) y compila.
+  - U-10 adelantado: el chat consume `/query/stream`; muestra los nodos según se ejecutan y los tokens del generator/direct/research; el `final` reemplaza el borrador por la respuesta completa.
+  - Docker: `frontend/Dockerfile` standalone no-root (306 MB), `frontend` en `compose.yaml` (healthcheck `/api/health`, `depends_on` agent/ingestion healthy), `develop.watch` en el override, `make watch`, `make openapi`, `make up` espera también al frontend.
+  - Tests: 101 en total (13 nuevos en `tests/test_api.py` con `httpx.ASGITransport` y fakes: REST, memoria por thread, lineal, SSE, 422, 502/504, HITL + resume + 404, OpenAPI). ruff, ruff format, mypy (92 archivos), pytest y pre-commit (con gitleaks) en verde. Frontend: `tsc`, `npm run build` OK; `npm run lint` 0 errores (los 4 warnings heredados del dashboard).
+- **Evidencia (stack real, todo vía `curl localhost:3000/api/...`):**
+  - `/api/health` → `{"status":"ok"}`; `/api/agent/health` → ok con qdrant/postgres/embeddings en `true`; Swagger 200 en `:8000/docs` y `:8001/docs`.
+  - «¿Cómo defino un campo computado que dependa de otros campos en el ORM?» (`thread_id=phase3-demo-1`) → `docs`; nodos contextualize > router > retriever > grader > generator; 11,9 s; 9.098 in / 1.541 out; $0,0170; marcadores [1]…[5], los 5 `cited` con `url#anchor` (p. ej. `…/orm.html#computed-fields`, `…/08_compute_onchange.html#dependencies`).
+  - Seguimiento «¿y cómo hago que se pueda editar a mano?» en el mismo thread → `standalone_question` = «¿Cómo hago que un campo computado en el ORM de Odoo 19 se pueda editar a mano?»; respuesta sobre `inverse` con [1]…[3]; 9,4 s; $0,0115.
+  - `mode=linear` con la misma pregunta → `nodes=[retriever, generator]`, 10 fuentes, 7,3 s, $0,0212 (más caro que el agéntico: el generator recibe los 10 chunks sin filtrar en vez de los ~6 que deja el grader; dato para E-05).
+  - SSE vía proxy: eventos llegan escalonados (marcas de tiempo de 0,9 s a 10 s; `sources` antes de los tokens, `final` al cierre): el proxy no bufferiza.
+  - Ingesta vía proxy: subir `phase3_smoke.md` → `created`, 1 chunk, 229 ms; aparece en `GET` (60 docs); `DELETE` 204, repetido 404 tipado; vuelve a 59 docs y 832 puntos. Un `.json` → 415 `unsupported_type`. Pregunta vacía → 422; `/query/resume` sin interrupt → 404 `no_pending_interrupt`.
+  - Capturas con respuesta real (Chrome headless vía CDP): escritorio 1440 px y teléfono 390 px (el panel de documentos se apila arriba con la lista acotada a 18 rem; sin scroll horizontal; el bloque de código hace scroll propio).
+- **Problemas / hallazgos:**
+  - `stream_events` sombreaba el nuevo parámetro `mode` con la variable del bucle de `astream` (modo de stream «values»): lo detectaron los tests; renombrado.
+  - Con `default_factory`, Pydantic deja `sources`/`steps`/`usage` opcionales en el esquema de salida y los tipos TS salen con `?`; resuelto con `json_schema_serialization_defaults_required`.
+  - `RouteContext` (helper global de Next 16) solo existe tras `next build`/`next typegen`; `tsc --noEmit` en limpio falla sin él.
+  - Chrome headless falla si `TMPDIR` es muy largo («Socket path too long» del singleton); para las capturas se usó un directorio corto.
+  - El nombre de los documentos sembrados es el nombre de archivo del snapshot (`reference__backend__orm.md`), no el título; queda así en el panel.
+- **Decisiones y desviaciones:**
+  - Cuerpo de error: se mantiene `{"detail": {"error": {code, message}}}` (el que ya usaban ingestion y `/search`) en vez de `{error: {...}}` de §5.1, para un solo formato en los dos servicios. Documentado como `ErrorResponse`.
+  - `QueryResponse.usage` agrupa tokens y costo (como §5.1) y sustituye a los campos planos de la Fase 2.
+  - REST con HITL: si el turno queda en `interrupt`, `/query` devuelve 200 con `answer=""` y `interrupt` {kind, payload}; `/query/resume` responde por REST. Sin endpoint de resume en streaming (llega con U-11).
+  - `routes_graph` no se implementa: el GAP 1 de la arquitectura ya decidió exportar el diagrama por script (`make graph`), sin endpoint.
+  - `develop.watch` usa `rebuild` (no `sync`): las imágenes instalan el código en el venv (no editable) y Next va en standalone, así que sincronizar archivos no tendría efecto.
+  - Nuevo `FRONTEND_PORT` (default 3000) para publicar el frontend en otro puerto; sirve para la prueba C-03 junto al stack principal.
+  - Tokens de color nuevos en `globals.css` (`code-*` para el resaltado, `neutral-soft` para el badge de respuesta directa, `danger`/`danger-soft` para errores); los componentes no usan hex.
+  - El chat usa SSE por defecto (U-10); el cliente REST (`query()`) queda disponible.
+- **Prueba en máquina limpia (C-03):** copia de los archivos versionables (`git ls-files -co --exclude-standard`, equivalente a un clon con los cambios de esta fase) en un directorio temporal; `.env` = `.env.example` + solo `ANTHROPIC_API_KEY` (copiada sin imprimirla) y `FRONTEND_PORT=3100`; proyecto Compose aparte `odoo-rag-clean` con `COMPOSE_FILE=compose.yaml` (sin el override, para no chocar con los puertos 6333/8000/8001 del stack principal). `docker compose up -d --build --wait` → exit 0 en 2 min 52 s (imágenes desde caché de build; TEI descargó el modelo en un volumen `hf-cache` nuevo); los 6 servicios healthy e `init` en 0. `/api/health` ok, `/api/agent/health` con las 3 dependencias en `true`, índice vacío (0 documentos), subida de `phase3_smoke.md` → 1 chunk, y una consulta completó el grafo con Anthropic (`contextualize > router > direct_answer`, 2,3 s). Sin seed (≈36 min en CPU). Después, `down -v --rmi local` **solo** del proyecto `odoo-rag-clean`; el stack principal sigue con sus 4 volúmenes y 832 puntos. Pendiente para ENT-09: repetir en otra máquina real, sin caché de imágenes.
+- **Próximos pasos:** Fase 4 (evaluación: E-01 con el golden set revisado, E-03…E-12, V-04, U-12 sobre `mode=linear` vs `agentic` en `/query`). U-11 (tarjeta HITL) y resume por SSE para cerrar O-D. Modo oscuro propio sigue pendiente. Commits sugeridos: schemas + API del agent + tests; frontend (cliente, tipos, componentes); Docker/compose/Makefile; backlog.
 
 ### 2026-11-02 — Fase 2: Grafo agéntico
 - **Hecho:**
