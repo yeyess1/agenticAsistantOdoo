@@ -42,6 +42,9 @@ extend-exclude = [".claude", "frontend", "*.md"]
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "SIM", "C4", "ASYNC", "RUF"]
 
+[tool.ruff.lint.per-file-ignores]
+"**/tests/*" = ["E501"]  # HTML/Markdown fixtures
+
 [tool.mypy]
 python_version = "3.12"
 plugins = ["pydantic.mypy"]
@@ -54,6 +57,7 @@ mypy_path = [
     "packages/common/src",
     "services/agent/src",
     "services/ingestion/src",
+    "services/ingestion/tests",
     "infra/init",
 ]
 
@@ -62,11 +66,20 @@ module = "common.*"
 strict = true
 
 [[tool.mypy.overrides]]
-module = ["ddgs", "ddgs.*"]
+module = ["ingestion.parsers.pdf", "test_parsers"]
+disallow_untyped_calls = false  # pymupdf ships partial annotations
+
+[[tool.mypy.overrides]]
+module = ["ddgs", "ddgs.*", "pymupdf4llm", "pymupdf4llm.*", "yaml", "yaml.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
-testpaths = ["packages/common/tests", "infra/init/tests"]
+testpaths = [
+    "packages/common/tests",
+    "infra/init/tests",
+    "services/ingestion/tests",
+    "services/agent/tests",
+]
 addopts = "-ra"
