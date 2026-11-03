@@ -40,6 +40,9 @@ class SourceRef(BaseModel):
     n: int
     kind: Literal["doc", "external"]
     doc_id: str | None = None
+    chunk_id: str | None = Field(
+        default=None, description="Qdrant point id of the chunk (eval fetches its text)."
+    )
     title: str
     section: str | None = None
     url: str

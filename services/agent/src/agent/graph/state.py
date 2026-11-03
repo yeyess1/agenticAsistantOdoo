@@ -35,6 +35,7 @@ class Source(TypedDict):
     n: int
     kind: Literal["doc", "external"]
     doc_id: str | None
+    chunk_id: str | None
     title: str
     section: str | None
     url: str

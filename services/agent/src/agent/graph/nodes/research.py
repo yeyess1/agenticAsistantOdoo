@@ -176,6 +176,7 @@ def make_finalize_external() -> Any:
                     n=s["n"],
                     kind="external",
                     doc_id=None,
+                    chunk_id=None,
                     title=s["title"],
                     section=None,
                     url=s["url"],

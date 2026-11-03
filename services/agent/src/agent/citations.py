@@ -24,6 +24,7 @@ def build_doc_sources(chunks: list[ScoredChunk]) -> list[Source]:
             "n": i,
             "kind": "doc",
             "doc_id": c.doc_id,
+            "chunk_id": c.chunk_id,
             "title": c.title,
             "section": c.section,
             "url": source_url(c),
