@@ -868,10 +868,14 @@ version = "0.1.0"
 source = { editable = "eval" }
 dependencies = [
     { name = "odoo-rag-common" },
+    { name = "pyyaml" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "odoo-rag-common", editable = "packages/common" }]
+requires-dist = [
+    { name = "odoo-rag-common", editable = "packages/common" },
+    { name = "pyyaml", specifier = ">=6.0" },
+]
 
 [[package]]
 name = "odoo-rag-ingestion"

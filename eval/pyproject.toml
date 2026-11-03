@@ -1,9 +1,9 @@
 [project]
 name = "odoo-rag-eval"
 version = "0.1.0"
-description = "Evaluation runner (golden set, metrics). Skeleton: implemented in Phase 4."
+description = "Evaluation runner: golden set, deterministic metrics and LLM judges (D-12, Phase 4)"
 requires-python = ">=3.12"
-dependencies = ["odoo-rag-common"]
+dependencies = ["odoo-rag-common", "pyyaml>=6.0"]
 
 [build-system]
 requires = ["hatchling"]

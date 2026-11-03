@@ -1,0 +1,820 @@
+# Golden set (E-01, D-12; schema in docs/ARCHITECTURE.md §12)
+#
+# Corpus: data/corpus/odoo19-dev (58 Odoo 19 Developer pages + coding_guidelines.pdf).
+# Questions in Spanish (as users will write them), corpus in English. `question_en` is a
+# faithful manual translation used by E-09 (ES vs EN retrieval).
+#
+# Categories (31 items):
+#   covered       17  q01-q17  answerable from the corpus -> expected_agent: docs
+#                              - most span 3-6 sections across 2-4 documents, so recall@k
+#                                can be contrasted over all the important chunks
+#                              - q11 (PDF) and q12 are single-section precise questions
+#                              - q05, q11, q14 target the coding guidelines PDF
+#                              - q15-q17 use colloquial Spanish that maps poorly to the
+#                                English docs (expects_rewrite: true)
+#   not_covered    6  q18-q23  the corpus does not answer them (grep evidence in notes)
+#                              -> expected_agent: research (Odoo Forum search)
+#   out_of_scope   4  q24-q27  greeting / non-Odoo requests -> expected_agent: direct
+#   follow_up      4  q28-q31  2 threads x 2 turns; turn 2 is unanswerable without turn 1
+#                              (contextualize must rewrite it) -> expected_agent: docs
+#
+# relevant_sections (section level, D-12):
+#   - Web pages: `<frontmatter url>#<anchor>`; every anchor exists verbatim as `{#anchor}`
+#     on a heading of that file. H1-H3 anchors are preferred; H4 anchors are used when the
+#     H3 above is very large (e.g. ORM "Fields") because the chunker moves the chunk anchor
+#     to H4+ headings, so a chunk's payload `anchor` can be an H4 id.
+#   - PDF: ingestion stores the PDF chunks with url = "coding_guidelines.pdf" (seed sends no
+#     source_url, no anchor for non-web sources) and `page` = N. They are written here as
+#     `coding_guidelines.pdf#page=N`; the eval loader must match them on (url, page).
+#     Canonical page: https://www.odoo.com/documentation/19.0/contributing/development/coding_guidelines.html
+#   - Empty for not_covered and out_of_scope.
+#
+# expected_answer: Spanish, concise, only facts stated in the cited sections. For
+# not_covered it describes what a good answer must do; for out_of_scope, the expected
+# behaviour of direct_answer.
+#
+# Optional fields: `thread` / `turn` only on follow_up items. `notes` explains what each
+# item tests.
+
+items:
+  # ---------------------------------------------------------------- covered
+  - id: q01
+    category: covered
+    question: >-
+      ¿Cómo defino un campo calculado en Odoo 19 que dependa de otros campos (incluso de un
+      campo de un registro relacionado), que se pueda editar a mano y por el que se pueda
+      buscar o agrupar?
+    question_en: >-
+      How do I define a computed field in Odoo 19 that depends on other fields (even a field
+      of a related record), that can be edited manually and that can be searched or grouped by?
+    expected_answer: >-
+      Se declara el campo con `compute='_compute_x'` y un método que asigna el valor a cada
+      registro de `self` (un recordset). Las dependencias se declaran con `@api.depends(...)`,
+      que admite rutas con punto como `partner_id.name` o `line_ids.value`; el ORM las usa para
+      recalcular. Los campos calculados son de solo lectura y no se almacenan por defecto: para
+      poder editarlos se define `inverse='_inverse_x'` (se ejecuta al guardar y escribe las
+      dependencias); para buscar sin almacenar se define `search='_search_x'` que devuelve un
+      dominio; con `store=True` se guardan en base de datos y habilitan búsqueda y agrupación,
+      con el coste de recalcular todos los registros afectados cuando cambia una dependencia.
+    relevant_sections:
+      - https://www.odoo.com/documentation/19.0/developer/tutorials/server_framework_101/08_compute_onchange.html#computed-fields
+      - https://www.odoo.com/documentation/19.0/developer/tutorials/server_framework_101/08_compute_onchange.html#dependencies
+      - https://www.odoo.com/documentation/19.0/developer/tutorials/server_framework_101/08_compute_onchange.html#inverse-function
+      - https://www.odoo.com/documentation/19.0/developer/tutorials/server_framework_101/08_compute_onchange.html#additional-information
+      - https://www.odoo.com/documentation/19.0/developer/reference/backend/orm.html#computed-fields
+    expected_agent: docs
+    expects_rewrite: false
+    notes: >-
+      Multi-faceted backend question: tutorial chapter 8 + ORM reference. Tests that the
+      retriever brings both the tutorial and the reference chunks (compute, depends, inverse,
+      search, store).
+
+  - id: q02
+    category: covered
+    question: >-
+      Tengo una app multiempresa: ¿cómo hago que cada usuario solo vea los registros de las
+      compañías a las que tiene acceso, y cómo se combinan esas reglas con las reglas por grupo?
+    question_en: >-
+      I have a multi-company app: how do I make each user see only the records of the
+      companies they have access to, and how do those rules combine with group rules?
+    expected_answer: >-
+      Con reglas de registro (`ir.rule`) basadas en `company_ids` (todas las compañías a las
+      que el usuario tiene acceso) o `company_id` (la compañía activa), por ejemplo
+      `domain_force` = `['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]`
+      para registros compartibles o `[('company_id', 'in', company_ids)]` para registros
+      restringidos. Las reglas multiempresa suelen ser globales (sin `groups`), porque si no
+      otras reglas podrían saltárselas. Las reglas globales se intersectan (todas deben
+      cumplirse), las de grupo se unen (basta una) y ambos conjuntos se intersectan entre sí.
+      Las reglas son default-allow: si ninguna aplica, se concede el acceso.
+    relevant_sections:
+      - https://www.odoo.com/documentation/19.0/developer/tutorials/restrict_data_access.html#multi-company-security
+      - https://www.odoo.com/documentation/19.0/developer/tutorials/restrict_data_access.html#record-rules
+      - https://www.odoo.com/documentation/19.0/developer/reference/backend/security.html#record-rules
+      - https://www.odoo.com/documentation/19.0/developer/reference/backend/security.html#global-rules-versus-group-rules
+      - https://www.odoo.com/documentation/19.0/developer/howtos/company.html#security-rules
+    expected_agent: docs
+    expects_rewrite: false
+    notes: >-
+      Security reference + restrict_data_access tutorial + multi-company how-to (3 docs).
+      Requires combining the multi-company domain with global vs group rule semantics.
+
+  - id: q03
+    category: covered
+    question: >-
+      ¿Qué necesito para crear un reporte PDF de mi modelo que aparezca en el menú Imprimir, y
+      cómo le cambio el formato de papel?
+    question_en: >-
+      What do I need to create a PDF report for my model that shows up in the Print menu, and
+      how do I change its paper format?
+    expected_answer: >-
+      Dos piezas, normalmente en archivos separados de la carpeta `report/` y declarados en
+      `data` del manifiesto: una plantilla QWeb y una acción `ir.actions.report`. La plantilla
+      mínima usa `t-call="web.html_container"`, recorre `docs` con `t-foreach` y llama a
+      `web.external_layout` (cabecera y pie por defecto); el cuerpo va dentro de
+      `<div class="page">`. La acción define `model`, `report_type` (`qweb-pdf` por defecto),
+      `report_name` (id externo de la plantilla) y, para salir en el menú Imprimir,
+      `binding_model_id`. El formato de papel es un registro `report.paperformat` (format, dpi,
+      márgenes, orientación…) que se asigna con `paperformat_id`; si no se indica se usa el de
+      la compañía.
+    relevant_sections:
+      - https://www.odoo.com/documentation/19.0/developer/tutorials/pdf_reports.html#file-structure
+      - https://www.odoo.com/documentation/19.0/developer/tutorials/pdf_reports.html#minimal-template
+      - https://www.odoo.com/documentation/19.0/developer/tutorials/pdf_reports.html#report-action
+      - https://www.odoo.com/documentation/19.0/developer/reference/backend/reports.html#minimal-viable-template
+      - https://www.odoo.com/documentation/19.0/developer/reference/backend/reports.html#paper-format
+      - https://www.odoo.com/documentation/19.0/developer/reference/backend/actions.html#report-actions-ir-actions-report
+    expected_agent: docs
+    expects_rewrite: false
+    notes: >-
+      Reports reference + pdf_reports tutorial + actions reference (3 docs, 6 sections). Good
+      for contrasting recall@k: the answer needs template, action and paper format chunks.
+
+  - id: q04
+    category: covered
+    question: >-
+      Quiero un widget de campo propio en OWL para usarlo en una vista de formulario con
+      `widget="..."`. ¿Cómo lo creo, cómo lo registro y dónde declaro sus archivos JS y XML?
+    question_en: >-
+      I want my own OWL field widget to use in a form view with `widget="..."`. How do I
+      create it, how do I register it and where do I declare its JS and XML files?
+    expected_answer: >-
+      Se crea un componente OWL (o se extiende uno existente como `BooleanField`, heredando su
+      plantilla con `t-inherit` y `xpath`) con `static props = { ...standardFieldProps }`, que
+      aporta props como `update`, `readonly` o el tipo de campo, y `static supportedTypes`.
+      Se registra en la categoría `fields` del registro: `registry.category("fields").add(
+      "my_text_field", MyTextField)`, lo que mapea el nombre del widget en la arquitectura al
+      componente, y se usa con `<field name="..." widget="my_text_field"/>`. Los archivos
+      `.js`, `.xml` (plantilla) y opcionalmente `.scss` del componente se añaden a un bundle de
+      assets en la clave `assets` del `__manifest__.py`, típicamente `web.assets_backend`.
+    relevant_sections:
+      - https://www.odoo.com/documentation/19.0/developer/howtos/javascript_field.html#create-a-new-field-component
+      - https://www.odoo.com/documentation/19.0/developer/howtos/javascript_field.html#subclass-an-existing-field-component
+      - https://www.odoo.com/documentation/19.0/developer/reference/frontend/registries.html#registries
+      - https://www.odoo.com/documentation/19.0/developer/reference/frontend/owl_components.html#using-owl-components
+      - https://www.odoo.com/documentation/19.0/developer/reference/frontend/assets.html#bundles
+    expected_agent: docs
+    expects_rewrite: false
+    notes: >-
+      Frontend: javascript_field how-to + registries + owl_components + assets (4 docs). Tests
+      cross-document assembly of a full recipe.
+
+  - id: q05
+    category: covered
+    question: >-
+      ¿Cómo agrego un campo nuevo a una vista de formulario de otro módulo sin tocar su XML, y
+      cómo debería nombrar el registro de la vista heredada?
+    question_en: >-
+      How do I add a new field to another module's form view without touching its XML, and how
+      should I name the inherited view record?
+    expected_answer: >-
+      Con herencia de vistas: se crea un `ir.ui.view` con `inherit_id` apuntando a la vista
+      padre y en `arch` elementos `xpath` con `expr` (expresión XPath que selecciona el nodo) y
+      `position` (`inside` por defecto, `after`, `before`, `replace`, `attributes`, `move`),
+      p. ej. `<xpath expr="//field[@name='description']" position="after">`. También se puede
+      usar directamente `<field name="description" position="after">`. Las vistas de extensión
+      se aplican sobre la vista primaria en orden de `priority`. Según las coding guidelines,
+      el XML id de la vista heredada debe ser el mismo que el de la original y su `name` debe
+      llevar el sufijo `.inherit.{details}`.
+    relevant_sections:
+      - https://www.odoo.com/documentation/19.0/developer/tutorials/server_framework_101/12_inheritance.html#view-inheritance
+      - https://www.odoo.com/documentation/19.0/developer/reference/user_interface/view_records.html#inheritance
+      - https://www.odoo.com/documentation/19.0/developer/reference/user_interface/view_records.html#inheritance-specs
+      - https://www.odoo.com/documentation/19.0/developer/reference/user_interface/view_records.html#inheritance-position
+      - coding_guidelines.pdf#page=8
+    expected_agent: docs
+    expects_rewrite: false
+    notes: >-
+      UI: inheritance tutorial + view_records reference + coding guidelines PDF ("Inheriting
+      XML", page 8). Mixes web and PDF chunks in the same answer.
+
+  - id: q06
+    category: covered
+    question: >-
+      ¿Cómo escribo pruebas unitarias en Python para mi módulo y cómo ejecuto solo una clase o
+      un método de test desde la línea de comandos?
+    question_en: >-
+      How do I write Python unit tests for my module and how do I run only one test class or
+      test method from the command line?
+    expected_answer: >-
+      Se crea el subpaquete `tests/` con archivos `test_*.py` importados en `tests/__init__.py`
+      (los no importados no se ejecutan). Las clases extienden `TransactionCase` (cada método
+      corre en una subtransacción con savepoint que no se confirma) y el setup común va en
+      `setUpClass`; no se debe llamar `cr.commit`. Los tests se ejecutan al instalar o
+      actualizar módulos con `--test-enable`. `--test-tags` (implica `--test-enable`) filtra
+      con el formato `[-][tag][/module][:class][.method]`, p. ej.
+      `--test-tags=/account:TestAccountMove.test_custom_currency_on_account_1`; también existe
+      `--test-file`. El decorador `@tagged` (solo en clases) añade o quita tags como `standard`,
+      `at_install` o `post_install`.
+    relevant_sections:
+      - https://www.odoo.com/documentation/19.0/developer/reference/backend/testing.html#testing-python-code
+      - https://www.odoo.com/documentation/19.0/developer/reference/backend/testing.html#running-tests
+      - https://www.odoo.com/documentation/19.0/developer/reference/backend/testing.html#test-selection
+      - https://www.odoo.com/documentation/19.0/developer/tutorials/unit_tests.html#running-tests
+      - https://www.odoo.com/documentation/19.0/developer/tutorials/unit_tests.html#writing-a-test
+      - https://www.odoo.com/documentation/19.0/developer/reference/cli.html#testing
+    expected_agent: docs
+    expects_rewrite: false
+    notes: >-
+      Testing reference + unit_tests tutorial + CLI reference (3 docs, 6 sections). Same
+      anchor `running-tests` in two documents: checks that url#anchor is compared as a whole.
+
+  - id: q07
+    category: covered
+    question: >-
+      Tengo una integración que usa XML-RPC con `execute_kw`. ¿Qué cambia si la paso a la nueva
+      API JSON-2 de Odoo 19 y hasta cuándo seguirá funcionando XML-RPC?
+    question_en: >-
+      I have an integration that uses XML-RPC with `execute_kw`. What changes if I move it to
+      the new Odoo 19 JSON-2 API, and until when will XML-RPC keep working?
+    expected_answer: >-
+      Los endpoints `/xmlrpc`, `/xmlrpc/2` y `/jsonrpc` están obsoletos desde 19.0 y está
+      previsto retirarlos en Odoo 22 (otoño 2028) / Odoo Online 21.1 (invierno 2027). En
+      XML-RPC `execute_kw` recibe base de datos, uid, contraseña, modelo, método, args y kwargs
+      en cada llamada. En JSON-2 se hace un POST a `/json/2/<model>/<method>` con un cuerpo
+      JSON (`ids`, `context` y los parámetros por nombre); la autenticación usa una API key en
+      la cabecera `Authorization: bearer ...` en lugar de usuario/contraseña, y la base de
+      datos solo se indica (cabecera `X-Odoo-Database`) cuando hay varias para un mismo
+      dominio. La API key se crea en Preferencias ‣ Seguridad de la cuenta ‣ Nueva API key.
+    relevant_sections:
+      - https://www.odoo.com/documentation/19.0/developer/reference/external_api.html#migrating-from-xml-rpc-json-rpc
+      - https://www.odoo.com/documentation/19.0/developer/reference/external_api.html#object-service
+      - https://www.odoo.com/documentation/19.0/developer/reference/external_api.html#request
+      - https://www.odoo.com/documentation/19.0/developer/reference/external_api.html#api-keys
+      - https://www.odoo.com/documentation/19.0/developer/reference/external_rpc_api.html#external-rpc-api
+      - https://www.odoo.com/documentation/19.0/developer/reference/external_rpc_api.html#calling-methods
+    expected_agent: docs
+    expects_rewrite: false
+    notes: >-
+      JSON-2 API vs RPC API (2 docs). Tests version-specific facts (deprecation dates) and the
+      contrast between the two authentication schemes.
+
+  - id: q08
+    category: covered
+    question: >-
+      En una nueva versión de mi módulo renombré un campo. ¿Cómo escribo el script de
+      migración para que no se pierdan los datos ni se rompan filtros o acciones que lo usan?
+    question_en: >-
+      In a new version of my module I renamed a field. How do I write the upgrade script so
+      that data is not lost and filters or actions that use it don't break?
+    expected_answer: >-
+      Se crea un script de upgrade: un archivo Python con una función `migrate(cr, version)`
+      en `$module/migrations/$version/` (o `upgrades/`, nombre preferido) con prefijo `pre-`,
+      `post-` o `end-`; `$version` incluye la versión mayor de Odoo y la del módulo y debe ser
+      mayor que la instalada. Solo se ejecuta al actualizar el módulo; las fases son pre (antes
+      de cargar el módulo), post (tras cargarlo y actualizarlo) y end (tras todos los
+      módulos), y dentro de cada fase en orden léxico. Con upgrade utils
+      (`from odoo.upgrade import util`) se usa `util.rename_field(cr, model, old, new)`, que
+      renombra el campo en los modelos que heredan y actualiza referencias directas e
+      indirectas (filtros, acciones de servidor, campos related, dominios…). Las operaciones
+      sobre campos conviene hacerlas en scripts `pre-`.
+    relevant_sections:
+      - https://www.odoo.com/documentation/19.0/developer/reference/upgrades/upgrade_scripts.html#upgrade-scripts
+      - https://www.odoo.com/documentation/19.0/developer/reference/upgrades/upgrade_scripts.html#writing-upgrade-scripts
+      - https://www.odoo.com/documentation/19.0/developer/reference/upgrades/upgrade_scripts.html#phases-of-upgrade-scripts
+      - https://www.odoo.com/documentation/19.0/developer/reference/upgrades/upgrade_utils.html#using-upgrade-utils
+      - https://www.odoo.com/documentation/19.0/developer/reference/upgrades/upgrade_utils.html#module-odoo.upgrade.util.fields
+      - https://www.odoo.com/documentation/19.0/developer/reference/upgrades/upgrade_utils.html#odoo.upgrade.util.fields.rename_field
+    expected_agent: docs
+    expects_rewrite: false
+    notes: >-
+      upgrade_scripts + upgrade_utils (2 docs, 6 sections). Module-level upgrades ARE covered;
+      contrast with q19 (database migration with OpenUpgrade), which is not.
+
+  - id: q09
+    category: covered
+    question: >-
+      Voy a empezar un módulo desde cero: ¿qué comandos de odoo-bin uso para generar su
+      estructura base, crear una base de datos nueva, instalar el módulo y abrir una consola
+      Python con acceso al ORM?
+    question_en: >-
+      I'm starting a module from scratch: which odoo-bin commands do I use to generate its base
+      structure, create a new database, install the module and open a Python console with
+      access to the ORM?
+    expected_answer: >-
+      `odoo-bin scaffold my_module /addons/` crea el esqueleto del módulo (nombre obligatorio,
+      destino por defecto el directorio actual, `-t` para una plantilla propia); un módulo
+      necesita al menos `__manifest__.py` e `__init__.py`. `odoo-bin db init <database>` crea
+      la base e instala `base` (opciones `--with-demo`, `--force`, `--country`, `--language`,
+      `--username`, `--password`). `odoo-bin module install <modules>` instala módulos en una
+      base ya inicializada. `odoo-bin shell` abre una consola con `env` disponible; por
+      defecto los cambios se revierten al salir salvo que se llame `env.cr.commit()`
+      (`--shell-interface` elige ipython, ptpython, bpython o python).
+    relevant_sections:
+      - https://www.odoo.com/documentation/19.0/developer/reference/cli.html#scaffold-scaffold-a-module
+      - https://www.odoo.com/documentation/19.0/developer/reference/cli.html#db-init-initialize-a-database
+      - https://www.odoo.com/documentation/19.0/developer/reference/cli.html#module-install-install-modules
+      - https://www.odoo.com/documentation/19.0/developer/reference/cli.html#shell-open-a-shell
+      - https://www.odoo.com/documentation/19.0/developer/tutorials/server_framework_101/02_newapp.html#prepare-the-addon-directory
+    expected_agent: docs
+    expects_rewrite: false
+    notes: >-
+      CLI reference (large page, 188 anchors) + tutorial chapter 2. Tests retrieval of several
+      distant sections of the same big document.
+
+  - id: q10
+    category: covered
+    question: >-
+      ¿Cómo declaro en Odoo 19 una restricción SQL (por ejemplo, precio > 0) y cuándo me
+      conviene más una restricción en Python con `@api.constrains`?
+    question_en: >-
+      How do I declare an SQL constraint in Odoo 19 (for example, price > 0) and when is a
+      Python constraint with `@api.constrains` a better fit?
+    expected_answer: >-
+      Desde 18.1 las restricciones e índices se declaran como atributos del modelo cuyo nombre
+      empieza por `_`: `_check_price = models.Constraint('CHECK(price > 0)', 'mensaje')`
+      (también `models.Index` y `models.UniqueIndex`); el mensaje puede ser un texto o una
+      función `(env, diag)`. Si hay datos que la violan, no se puede añadir la restricción. Las
+      restricciones Python son métodos decorados con `@api.constrains('campo', ...)` que lanzan
+      `ValidationError`; sirven para comprobaciones complejas, solo aceptan nombres simples de
+      campo (no rutas con punto) y solo se disparan si esos campos están en el `create`/`write`.
+      Las SQL suelen ser más eficientes, así que se prefieren cuando importa el rendimiento.
+    relevant_sections:
+      - https://www.odoo.com/documentation/19.0/developer/tutorials/server_framework_101/10_constraints.html#sql
+      - https://www.odoo.com/documentation/19.0/developer/tutorials/server_framework_101/10_constraints.html#python
+      - https://www.odoo.com/documentation/19.0/developer/reference/backend/orm.html#constraints-and-indexes
+      - https://www.odoo.com/documentation/19.0/developer/reference/backend/orm.html#odoo.api.constrains
+      - https://www.odoo.com/documentation/19.0/developer/reference/backend/orm/changelog.html#odoo-online-version-18-1
+    expected_agent: docs
+    expects_rewrite: false
+    notes: >-
+      Tutorial chapter 10 + ORM reference + ORM changelog (3 docs). Version-sensitive: the
+      model would tend to answer with the pre-18 `_sql_constraints` list, which the docs no
+      longer describe; faithfulness should catch it.
+
+  - id: q11
+    category: covered
+    question: >-
+      Según las guías de código de Odoo, ¿en qué orden deben ir los atributos y métodos dentro
+      de una clase de modelo?
+    question_en: >-
+      According to Odoo's coding guidelines, in what order should attributes and methods go
+      inside a model class?
+    expected_answer: >-
+      1) atributos privados (`_name`, `_description`, `_inherit`…); 2) método por defecto y
+      `default_get`; 3) declaración de campos; 4) restricciones SQL e índices; 5) métodos
+      compute, inverse y search en el mismo orden que los campos; 6) métodos de selección;
+      7) métodos `@api.constrains` y `@api.onchange`; 8) métodos CRUD (overrides del ORM);
+      9) métodos de acción; 10) por último, otros métodos de negocio.
+    relevant_sections:
+      - coding_guidelines.pdf#page=20
+    expected_agent: docs
+    expects_rewrite: false
+    notes: >-
+      Single-section precise question that only the PDF answers (page 20). Tests PDF ingestion
+      and the `p. N` citation format.
+
+  - id: q12
+    category: covered
+    question: >-
+      Con la API JSON-2, ¿puedo hacer varias llamadas seguidas dentro de una misma
+      transacción para que se reviertan todas si una falla?
+    question_en: >-
+      With the JSON-2 API, can I make several consecutive calls inside the same transaction so
+      that they all roll back if one fails?
+    expected_answer: >-
+      No. Cada llamada al endpoint JSON-2 corre en su propia transacción SQL: se confirma si
+      tiene éxito y se descarta si hay error, y no es posible encadenar varias llamadas en una
+      sola transacción. La solución es llamar a un único método que haga todas las operaciones
+      relacionadas (como `search_read`, o métodos `action_` como `action_confirm` de
+      `sale.order`); si no existe, se puede crear uno en un módulo dedicado.
+    relevant_sections:
+      - https://www.odoo.com/documentation/19.0/developer/reference/external_api.html#transaction
+    expected_agent: docs
+    expects_rewrite: false
+    notes: >-
+      Single-section precise question (external_api "Transaction"). Expected high MRR; the
+      answer is a clear "no" plus the documented workaround.
+
+  - id: q13
+    category: covered
+    question: >-
+      Necesito cambiar el comportamiento de un método de un componente OWL estándar de Odoo
+      sin copiar su código. ¿Cómo uso `patch` y qué cuidados debo tener?
+    question_en: >-
+      I need to change the behavior of a method of a standard Odoo OWL component without
+      copying its code. How do I use `patch` and what should I be careful about?
+    expected_answer: >-
+      Se importa `patch` de `@web/core/utils/patch` y se llama `patch(objToPatch, extension)`,
+      que modifica el objeto o clase en el sitio y devuelve una función para quitar el parche.
+      Para métodos de una clase (o componente) hay que parchear el `prototype`
+      (`patch(MyComponent.prototype, {...})`); parchear la clase misma afecta a propiedades
+      estáticas. Dentro de la extensión se accede al original con `super`, que solo funciona en
+      métodos (no en `function` ni arrow functions). El constructor no se puede parchear, por
+      eso los componentes usan `setup`. Parchear modifica todas las instancias, así que debe
+      hacerse lo antes posible, a nivel superior del módulo.
+    relevant_sections:
+      - https://www.odoo.com/documentation/19.0/developer/reference/frontend/patching_code.html#description
+      - https://www.odoo.com/documentation/19.0/developer/reference/frontend/patching_code.html#patching-a-javascript-class
+      - https://www.odoo.com/documentation/19.0/developer/reference/frontend/patching_code.html#patching-a-component
+      - https://www.odoo.com/documentation/19.0/developer/reference/frontend/patching_code.html#removing-a-patch
+      - https://www.odoo.com/documentation/19.0/developer/reference/frontend/javascript_reference.html#patching-classes
+    expected_agent: docs
+    expects_rewrite: false
+    notes: >-
+      Frontend: patching_code reference + javascript_reference (2 docs). The answer must cover
+      prototype vs class, `super` limits and the "patch early" warning.
+
+  - id: q14
+    category: covered
+    question: >-
+      ¿Cómo marco como traducibles los mensajes de error que lanzo desde Python y cuál es la
+      forma correcta de meter variables dentro del texto?
+    question_en: >-
+      How do I mark the error messages I raise from Python as translatable, and what is the
+      correct way to include variables in the text?
+    expected_answer: >-
+      Envolviendo un literal en `self.env._("...")` (o el antiguo `_` de `odoo.tools`); en
+      JavaScript, `_t()`. Solo se pueden marcar literales, no expresiones ni variables. Las
+      variables se pasan como parámetros de la función: `_("Record %s cannot be modified!",
+      record)`, no formateando antes (`_("..." % record)` no funciona) ni después
+      (`_("...") % record` pierde el fallback). No se debe partir una frase en varios bloques
+      concatenados. `_()` no sirve para traducir valores de campos: para eso se usa el flag
+      `translate` del campo. Para cadenas a nivel de módulo existe la versión perezosa
+      `LazyTranslate` (`_lt`).
+    relevant_sections:
+      - https://www.odoo.com/documentation/19.0/developer/howtos/translations.html#explicit-exports
+      - https://www.odoo.com/documentation/19.0/developer/howtos/translations.html#variables
+      - https://www.odoo.com/documentation/19.0/developer/howtos/translations.html#blocks
+      - coding_guidelines.pdf#page=17
+      - coding_guidelines.pdf#page=18
+    expected_agent: docs
+    expects_rewrite: false
+    notes: >-
+      translations how-to + coding guidelines PDF ("Use translation method correctly", pages
+      17-18). Web and PDF chunks both relevant; tests mixed citation formats.
+
+  - id: q15
+    category: covered
+    question: >-
+      ¿Cómo hago que cuando el usuario marque una casilla en el formulario se le rellenen
+      solitos otros campos, antes de darle a guardar?
+    question_en: >-
+      How do I make other fields fill themselves in automatically when the user ticks a
+      checkbox in the form, before they hit save?
+    expected_answer: >-
+      Con un método decorado con `@api.onchange('campo')`: se llama en la vista de formulario
+      cuando cambia ese campo, sobre un pseudo-registro con los valores del formulario, y las
+      asignaciones (`self.garden_area = 10`) se envían al cliente sin guardar nada en la base.
+      No se itera sobre `self`. Puede devolver un aviso no bloqueante (`warning`). Solo admite
+      nombres simples de campo y no se deben llamar métodos CRUD sobre ese registro. Los
+      onchange solo se disparan en la vista de formulario, nunca al crear registros por
+      código, por eso no deben contener lógica de negocio; en general se prefieren campos
+      calculados.
+    relevant_sections:
+      - https://www.odoo.com/documentation/19.0/developer/tutorials/server_framework_101/08_compute_onchange.html#onchanges
+      - https://www.odoo.com/documentation/19.0/developer/tutorials/server_framework_101/08_compute_onchange.html#how-to-use-them
+      - https://www.odoo.com/documentation/19.0/developer/reference/backend/orm.html#odoo.api.onchange
+    expected_agent: docs
+    expects_rewrite: true
+    notes: >-
+      Rewriter trigger: colloquial Spanish ("se rellenen solitos", "casilla", "darle a
+      guardar") never says onchange; the rewriter must translate it into the docs' vocabulary
+      ("onchange", "update form without saving").
+
+  - id: q16
+    category: covered
+    question: >-
+      ¿Cómo le pongo un botoncito arriba en el formulario que al darle clic ejecute una función
+      mía de Python?
+    question_en: >-
+      How do I put a little button at the top of the form that runs one of my Python functions
+      when clicked?
+    expected_answer: >-
+      Se añade en el `<header>` del formulario un `<button name="action_do_something"
+      type="object" string="..."/>`: con `type="object"` el framework llama al método del
+      modelo cuyo nombre es `name`, con el registro actual y el contexto (`type="action"`
+      carga en cambio una acción por su XMLID). El método debe ser público (sin `_` inicial),
+      iterar sobre `self` porque puede recibir varios registros y devolver algo (p. ej.
+      `return True`) para poder llamarse por XML-RPC.
+    relevant_sections:
+      - https://www.odoo.com/documentation/19.0/developer/tutorials/server_framework_101/09_actions.html#object-type
+      - https://www.odoo.com/documentation/19.0/developer/reference/user_interface/view_architectures.html#button-display-action-buttons
+    expected_agent: docs
+    expects_rewrite: true
+    notes: >-
+      Rewriter trigger: colloquial phrasing ("botoncito", "darle clic", "función mía") vs the
+      docs' "button type=object" / "public method". view_architectures is a huge page (74
+      anchors), so the precise chunk is hard to rank.
+
+  - id: q17
+    category: covered
+    question: >-
+      Quiero meterle a mi módulo unos datos de mentira para hacer demos al cliente, pero que no
+      se carguen en la base de producción. ¿Cómo lo hago?
+    question_en: >-
+      I want to add some fake data to my module to give demos to the client, but without it
+      being loaded into the production database. How do I do it?
+    expected_answer: >-
+      Son datos de demostración: se declaran en archivos XML o CSV (normalmente en la carpeta
+      `demo/`) listados en la clave `demo` del `__manifest__.py`, a diferencia de los datos
+      maestros que van en `data` y siempre se instalan. Desde Odoo 18.3 los datos demo ya no se
+      cargan por defecto: hay que pedirlos al crear la base (gestor de bases de datos, opción
+      `--with-demo`, p. ej. `odoo-bin db init <db> --with-demo`).
+    relevant_sections:
+      - https://www.odoo.com/documentation/19.0/developer/tutorials/define_module_data.html#demo-data
+      - https://www.odoo.com/documentation/19.0/developer/tutorials/define_module_data.html#manifest
+      - https://www.odoo.com/documentation/19.0/developer/reference/backend/orm/changelog.html#odoo-online-version-18-3
+      - https://www.odoo.com/documentation/19.0/developer/reference/cli.html#cmdoption-odoo-bin-db-init-with-demo
+    expected_agent: docs
+    expects_rewrite: true
+    notes: >-
+      Rewriter trigger: "datos de mentira" (fake/dummy data) must become "demo data". Spans
+      tutorial + changelog + CLI (3 docs).
+
+  # ------------------------------------------------------------ not_covered
+  - id: q18
+    category: not_covered
+    question: >-
+      En hr_payroll, confirmar un lote de nóminas (hr.payslip.run) de 3.000 empleados tarda
+      horas. ¿Cómo paralelizo el cálculo de las nóminas (compute_sheet) en varios workers o con
+      queue_job?
+    question_en: >-
+      In hr_payroll, confirming a payslip batch (hr.payslip.run) of 3,000 employees takes
+      hours. How do I parallelize payslip computation (compute_sheet) across several workers or
+      with queue_job?
+    expected_answer: >-
+      Debe indicar que la documentación indexada no cubre el módulo de nómina (hr_payroll) ni
+      el procesamiento paralelo de lotes de nóminas, sin inventar métodos de hr_payroll, y
+      delegar a la búsqueda en el Odoo Forum, presentando lo encontrado como fuente externa con
+      enlaces.
+    relevant_sections: []
+    expected_agent: research
+    expects_rewrite: false
+    notes: >-
+      Business-module specifics absent from the corpus. Grep (case-insensitive, all .md + PDF
+      text): payroll, payslip, hr_payroll, hr.payslip, nómina, salary, queue_job, queue.job ->
+      nothing relevant (only "payslip" in a sample stat-button XML in javascript_reference).
+      Borderline neighbours: actions.html#writing-cron-functions (generic cron batching with
+      _commit_progress) and cli --workers (HTTP workers); neither answers the payroll question,
+      so the grader should reject them.
+
+  - id: q19
+    category: not_covered
+    question: >-
+      ¿Cómo migro una base de datos Odoo Community de la versión 16 a la 17 con OpenUpgrade, y
+      qué hago con los módulos de la OCA que todavía no tienen scripts de migración?
+    question_en: >-
+      How do I migrate an Odoo Community database from version 16 to 17 with OpenUpgrade, and
+      what do I do with OCA modules that don't have migration scripts yet?
+    expected_answer: >-
+      Debe indicar que la documentación indexada no explica la migración de bases Community
+      entre versiones mayores con OpenUpgrade ni los módulos OCA (solo cubre scripts de upgrade
+      de módulos y upgrade utils), y delegar a la búsqueda en el Odoo Forum, marcando el
+      resultado como fuente externa.
+    relevant_sections: []
+    expected_agent: research
+    expects_rewrite: false
+    notes: >-
+      Grep: openupgrade, "open upgrade", OCA (word), "community" (only in tracebacks/paths and
+      edition notes), "major version" (only module version naming in upgrade_scripts and
+      upgrade test decorators) -> nothing about OpenUpgrade or database migration between
+      major versions. Borderline: upgrade_scripts/upgrade_utils are about module upgrade
+      scripts (covered, see q08); the retriever may return them but they don't answer this.
+
+  - id: q20
+    category: not_covered
+    question: >-
+      ¿Qué valores de shared_buffers, work_mem y effective_cache_size de PostgreSQL
+      recomiendan para un Odoo con unos 200 usuarios concurrentes, y conviene poner PgBouncer
+      delante?
+    question_en: >-
+      Which PostgreSQL shared_buffers, work_mem and effective_cache_size values are
+      recommended for an Odoo with about 200 concurrent users, and is it worth putting
+      PgBouncer in front?
+    expected_answer: >-
+      Debe indicar que la documentación indexada no trata el ajuste de PostgreSQL ni PgBouncer
+      para Odoo, sin inventar cifras, y delegar a la búsqueda en el Odoo Forum como fuente
+      externa.
+    relevant_sections: []
+    expected_agent: research
+    expects_rewrite: false
+    notes: >-
+      Grep: shared_buffers, work_mem, effective_cache, postgresql.conf, max_connections,
+      pgbouncer, tuning (only UI "fine tuning" sentences), sizing, "concurrent users",
+      replication, failover, standby -> nothing relevant. Borderline neighbours: cli.html has
+      --db_replica_host/--db_replica_port and --workers/limit options (Odoo-side), not
+      PostgreSQL tuning.
+
+  - id: q21
+    category: not_covered
+    question: >-
+      Corregí el costo de una recepción ya validada; ¿cómo recalculo las capas de valoración
+      FIFO (stock.valuation.layer) de los productos afectados?
+    question_en: >-
+      I corrected the cost of an already validated receipt; how do I recompute the FIFO
+      valuation layers (stock.valuation.layer) of the affected products?
+    expected_answer: >-
+      Debe indicar que la documentación indexada no cubre la valoración de inventario ni las
+      capas FIFO del módulo stock, sin inventar métodos, y delegar a la búsqueda en el Odoo
+      Forum como fuente externa.
+    relevant_sections: []
+    expected_agent: research
+    expects_rewrite: false
+    notes: >-
+      Grep: fifo, stock.valuation, "valuation" as a word, "inventory valuation", "cost method",
+      "average cost", "landed cost", stock.quant -> nothing ("valuation" only matched inside
+      "evaluation"; one GitHub link to stock_quant.py in chapter 10 is just a URL).
+
+  - id: q22
+    category: not_covered
+    question: >-
+      ¿Cómo configuro un modelo de conciliación bancaria (account.reconcile.model) para que
+      case automáticamente los pagos con las facturas usando la referencia del extracto?
+    question_en: >-
+      How do I configure a bank reconciliation model (account.reconcile.model) so it
+      automatically matches payments with invoices using the statement reference?
+    expected_answer: >-
+      Debe indicar que la documentación indexada no cubre los modelos de conciliación bancaria
+      de contabilidad y delegar a la búsqueda en el Odoo Forum, presentando la respuesta como
+      fuente externa.
+    relevant_sections: []
+    expected_agent: research
+    expects_rewrite: false
+    notes: >-
+      Grep: reconcil (only a GitHub URL to account_reconcile_model.py in chapter 8 as a
+      computed-field example), account.reconcile, "bank statement", "bank reconciliation" ->
+      nothing relevant. The account standard-module pages were explicitly excluded from the
+      corpus (D-11).
+
+  - id: q23
+    category: not_covered
+    question: >-
+      Cuando se cae internet en una tienda, ¿cómo sincroniza el Punto de Venta los pedidos
+      hechos sin conexión y dónde los guarda mientras tanto?
+    question_en: >-
+      When the internet goes down in a store, how does the Point of Sale sync the orders made
+      offline, and where does it store them in the meantime?
+    expected_answer: >-
+      Debe indicar que la documentación indexada no describe el funcionamiento sin conexión ni
+      la sincronización de pedidos del Punto de Venta y delegar a la búsqueda en el Odoo Forum
+      como fuente externa, sin inventar detalles de implementación.
+    relevant_sections: []
+    expected_agent: research
+    expects_rewrite: false
+    notes: >-
+      Grep: offline, indexeddb, "service worker", pos.order, pos.session, pos_ -> nothing;
+      "point of sale"/"pos" only appear as passing mentions (asset bundle web.assets_common,
+      client action tag "pos.ui", JS code organisation). None describes offline sync.
+
+  # ----------------------------------------------------------- out_of_scope
+  - id: q24
+    category: out_of_scope
+    question: "Hola, buenos días. ¿Qué puedes hacer?"
+    question_en: "Hi, good morning. What can you do?"
+    expected_answer: >-
+      Saludo breve en español explicando que es un asistente técnico sobre la documentación de
+      desarrollo de Odoo 19 (ORM, vistas, seguridad, frontend OWL, reportes, CLI, APIs,
+      upgrades) y que puede buscar en el Odoo Forum lo que no esté en la documentación. Sin
+      recuperación ni citas.
+    relevant_sections: []
+    expected_agent: direct
+    expects_rewrite: false
+    notes: Greeting; the router must not call the retriever. Tests direct routing.
+
+  - id: q25
+    category: out_of_scope
+    question: "¿Va a llover mañana en Bogotá?"
+    question_en: "Is it going to rain tomorrow in Bogotá?"
+    expected_answer: >-
+      Rechazo amable: está fuera del alcance (solo responde sobre desarrollo en Odoo 19) y no
+      tiene información del clima; invita a preguntar sobre Odoo. Sin búsqueda externa.
+    relevant_sections: []
+    expected_agent: direct
+    expects_rewrite: false
+    notes: >-
+      Clearly non-Odoo request; must not be sent to research (the forum tool would be a wrong
+      and costly route).
+
+  - id: q26
+    category: out_of_scope
+    question: "Dame una receta fácil de ajiaco santafereño."
+    question_en: "Give me an easy recipe for ajiaco santafereño."
+    expected_answer: >-
+      Rechazo amable indicando que el asistente solo cubre desarrollo en Odoo 19 y ofreciendo
+      ayuda con una pregunta técnica. No debe dar la receta.
+    relevant_sections: []
+    expected_agent: direct
+    expects_rewrite: false
+    notes: Non-Odoo request with an imperative tone; tests abstention.
+
+  - id: q27
+    category: out_of_scope
+    question: "¿Cómo invierto una cadena de texto en Python?"
+    question_en: "How do I reverse a string in Python?"
+    expected_answer: >-
+      Indicar que es una pregunta general de Python, ajena a Odoo, fuera del alcance del
+      asistente, y ofrecer ayuda con temas de desarrollo en Odoo 19. Sin recuperación ni
+      búsqueda en el foro.
+    relevant_sections: []
+    expected_agent: direct
+    expects_rewrite: false
+    notes: >-
+      Hard negative for the router: it is a programming question (same domain vocabulary as
+      the corpus) but unrelated to Odoo, so it must go to direct, not docs or research.
+
+  # -------------------------------------------------------------- follow_up
+  - id: q28
+    category: follow_up
+    thread: fu-relations
+    turn: 1
+    question: >-
+      En mi modelo de propiedades quiero guardar el comprador, que es un res.partner. ¿Qué tipo
+      de campo uso?
+    question_en: >-
+      In my property model I want to store the buyer, who is a res.partner. Which field type do
+      I use?
+    expected_answer: >-
+      Un `Many2one`: `buyer_id = fields.Many2one("res.partner", string="Buyer")`. Es un enlace
+      simple a otro registro (su valor es un recordset de 0 o 1 registros), por convención con
+      sufijo `_id`, y se accede a los datos con `record.buyer_id.name`. Admite parámetros como
+      `domain`, `context` u `ondelete` (`set null`, `restrict`, `cascade`). En un formulario se
+      ve como una lista desplegable.
+    relevant_sections:
+      - https://www.odoo.com/documentation/19.0/developer/tutorials/server_framework_101/07_relations.html#many2one
+      - https://www.odoo.com/documentation/19.0/developer/reference/backend/orm.html#odoo.fields.Many2one
+    expected_agent: docs
+    expects_rewrite: false
+    notes: >-
+      Thread opener; self-contained. Provides the context ("comprador", res.partner, the
+      Many2one) that turn 2 depends on.
+
+  - id: q29
+    category: follow_up
+    thread: fu-relations
+    turn: 2
+    question: >-
+      ¿Y cómo hago lo contrario, ver desde el partner todas las propiedades que tienen ese
+      campo apuntando a él?
+    question_en: >-
+      And how do I do the opposite, see from the partner all the properties that have that
+      field pointing to it?
+    expected_answer: >-
+      Con un `One2many` inverso del Many2one del comprador:
+      `property_ids = fields.One2many("estate.property", "buyer_id")`; el primer parámetro es
+      el comodelo y el segundo (`inverse_name`) el Many2one inverso, ambos obligatorios. Es una
+      relación virtual, así que debe existir el Many2one en el comodelo. Por convención lleva
+      sufijo `_ids` y se recorre como una lista de registros. Como `res.partner` es de otro
+      módulo, el campo se añade heredando el modelo con `_inherit = ["res.partner"]` en un
+      archivo propio.
+    relevant_sections:
+      - https://www.odoo.com/documentation/19.0/developer/tutorials/server_framework_101/07_relations.html#one2many
+      - https://www.odoo.com/documentation/19.0/developer/reference/backend/orm.html#odoo.fields.One2many
+      - https://www.odoo.com/documentation/19.0/developer/tutorials/server_framework_101/12_inheritance.html#model-inheritance
+    expected_agent: docs
+    expects_rewrite: false
+    notes: >-
+      Unanswerable alone: "lo contrario" and "ese campo" refer to the Many2one buyer field of
+      turn 1. contextualize must produce a standalone question (One2many inverse of
+      buyer_id). Chapter 12's exercise (One2many on res.users via _inherit) is the
+      documented analogue for adding the inverse on a model of another module.
+
+  - id: q30
+    category: follow_up
+    thread: fu-services
+    turn: 1
+    question: >-
+      Desde un componente OWL del cliente web, ¿cómo llamo a un método de un modelo Python?
+    question_en: >-
+      From an OWL component in the web client, how do I call a method of a Python model?
+    expected_answer: >-
+      Con el servicio `orm`, obtenido en `setup()` mediante el hook `useService("orm")`
+      (preferible a usar `env.services` directamente porque evita llamadas tras destruir el
+      componente), y luego `this.orm.call("some.model", "some_method", [args])`, que pasa por
+      `/web/dataset/call_kw`. Para llamar directamente a un controlador (una ruta) se usa el
+      servicio/función `rpc`.
+    relevant_sections:
+      - https://www.odoo.com/documentation/19.0/developer/reference/frontend/javascript_reference.html#using-services
+      - https://www.odoo.com/documentation/19.0/developer/reference/frontend/javascript_reference.html#talking-to-the-server
+      - https://www.odoo.com/documentation/19.0/developer/reference/frontend/services.html#using-a-service
+      - https://www.odoo.com/documentation/19.0/developer/reference/frontend/framework_overview.html#services
+    expected_agent: docs
+    expects_rewrite: false
+    notes: >-
+      Thread opener; self-contained. Establishes "services" as the topic for turn 2.
+
+  - id: q31
+    category: follow_up
+    thread: fu-services
+    turn: 2
+    question: >-
+      ¿Y si quiero crear uno de esos pero propio, cómo lo defino y lo registro para que el
+      cliente web lo arranque?
+    question_en: >-
+      And if I want to create one of those of my own, how do I define it and register it so
+      the web client starts it?
+    expected_answer: >-
+      Un servicio es un objeto con `start(env, deps)` (devuelve el valor del servicio o una
+      promesa), `dependencies` opcional (lista de otros servicios que recibe en `deps`) y
+      `async` opcional. Se registra con `registry.category("services").add("myService",
+      myService)`; al arrancar, el cliente web inicia todos los servicios de ese registro y el
+      nombre usado es el nombre del servicio. Si no exporta valor, queda como `null` en
+      `env.services`.
+    relevant_sections:
+      - https://www.odoo.com/documentation/19.0/developer/reference/frontend/services.html#services
+      - https://www.odoo.com/documentation/19.0/developer/reference/frontend/services.html#defining-a-service
+      - https://www.odoo.com/documentation/19.0/developer/reference/frontend/registries.html#service-registry
+    expected_agent: docs
+    expects_rewrite: false
+    notes: >-
+      Unanswerable alone: "uno de esos" refers to the web-client services (orm) of turn 1.
+      Without contextualize the retriever has no topic keyword at all.
