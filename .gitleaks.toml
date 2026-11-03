@@ -1,9 +1,18 @@
-# gitleaks configuration (F-05): default ruleset plus a narrow allowlist.
+# gitleaks configuration (F-05): default ruleset plus narrow allowlists.
 title = "odoo-rag gitleaks"
 
 [extend]
 useDefault = true
 
-[allowlist]
+[[allowlists]]
 description = "Dev-only placeholders documented in .env.example"
 paths = ['''^\.env\.example$''']
+
+[[allowlists]]
+description = "False positive: embeddings prose in backlog.md ('last-token pooling, L2-normalizado')"
+regexTarget = "line"
+regexes = ['''last-token pooling, L2-normalizado''']
+
+[[allowlists]]
+description = "Build output and dependencies (git-ignored): frontend/.next and node_modules"
+paths = ['''(^|/)\.next/''', '''(^|/)node_modules/''']
