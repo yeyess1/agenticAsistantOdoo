@@ -19,7 +19,9 @@ from common.schemas.events import (
     FinalEvent,
     InterruptEvent,
 )
+from google.genai import errors as genai_errors
 from langchain_core.runnables import RunnableConfig
+from langchain_google_genai._common import GoogleGenerativeAIError
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import Command
 
@@ -28,7 +30,7 @@ def classify_error(exc: BaseException) -> str:
     """Stable error code for the API layer (502 vs 504, ARCHITECTURE §5.1)."""
     if isinstance(exc, httpx.TimeoutException | asyncio.TimeoutError | anthropic.APITimeoutError):
         return "upstream_timeout"
-    if isinstance(exc, anthropic.APIError):
+    if isinstance(exc, anthropic.APIError | genai_errors.APIError | GoogleGenerativeAIError):
         return "llm_unavailable"
     if isinstance(exc, httpx.HTTPError):
         return "retrieval_unavailable"

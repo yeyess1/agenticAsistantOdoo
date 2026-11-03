@@ -12,6 +12,7 @@ dependencies = [
     "langchain-core>=0.3",
     "langchain-anthropic>=0.3",
     "ddgs>=9.0",
+    "langchain-google-genai>=4.4.2",
 ]
 
 [build-system]

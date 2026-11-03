@@ -26,7 +26,13 @@ class Settings(BaseSettings):
     )
 
     # --- LLM (D-03): one model per role -------------------------------------------------
+    # `anthropic` (default) or `google` (Gemini API). The LLM_MODEL_* ids must belong to it.
+    llm_provider: Literal["anthropic", "google"] = "anthropic"
+    google_api_key: SecretStr = SecretStr("")
     anthropic_api_key: SecretStr = SecretStr("")
+    # Required only for organization-level keys (not scoped to a workspace): sent as the
+    # `anthropic-workspace-id` header so usage bills to that workspace of the org.
+    anthropic_workspace_id: str = ""
     llm_model_contextualizer: str = "claude-haiku-5-5"
     llm_model_router: str = "claude-haiku-5-5"
     llm_model_grader: str = "claude-haiku-5-5"

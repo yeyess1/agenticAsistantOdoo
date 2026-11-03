@@ -8,7 +8,7 @@ help: ## List targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-8s %s\n", $$1, $$2}'
 
 env: ## Create .env from .env.example if missing
-	@test -f .env || { cp .env.example .env && echo "Created .env from .env.example: set ANTHROPIC_API_KEY"; }
+	@test -f .env || { cp .env.example .env && echo "Created .env from .env.example: set the API key of LLM_PROVIDER"; }
 
 up: env ## Build and start the stack (TEI on CPU), wait for init and healthy datastores
 	$(COMPOSE) up -d --build
