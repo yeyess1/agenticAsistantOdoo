@@ -5,24 +5,34 @@ Asistente agéntico de conocimiento para desarrolladores (RAG orquestado como gr
 
 ## Estado actual (handoff entre sesiones)
 
-> Actualizado 2026-11-02 (noche, tras la Fase 3). Leer esto primero al retomar una sesión nueva.
+> Actualizado 2026-11-03 (tras la Fase 4). Leer esto primero al retomar una sesión nueva.
 
 - **Fase de decisiones:** cerrada (D-01…D-14). Diseño en `docs/ARCHITECTURE.md`, aprobado.
 - **Fase 0 (Fundación):** cerrada, incluida F-07: CI en verde en GitHub. Repo: https://github.com/yeyess1/agenticAsistantOdoo (push con la cuenta gh `yeyess1`; la activa por defecto, `yeiCastordata`, no tiene permiso de push).
 - **Fase 1 (Ingesta + vector):** hecha y verificada con el stack real. `make up` levanta también `ingestion` (:8001) y `agent` (:8000, solo `/search` y `/health`), ambos en healthy. `make seed` indexó 59 archivos (58 MD + 1 PDF) = 832 puntos en Qdrant = 59 filas `indexed` en Postgres. Re-seed idempotente (59 unchanged, 6 s). ruff, mypy, pytest (60) y pre-commit en verde.
-  - ✅ Hechas: I-01…I-12, V-01…V-03, A-07. ⬜ V-04 queda para la Fase 4.
-- **Cambios sin commitear:** el trabajo de la Fase 3 está en el árbol de trabajo (la Fase 2 ya está commiteada en local). El corpus ya está versionado. `eval/golden/` sigue sin commitear (borrador del golden set pendiente de revisión).
+  - ✅ Hechas: I-01…I-12, V-01…V-03, A-07. V-04 se cerró en la Fase 4.
+- **Commits:** Fases 0–4 y el golden set (`eval/golden/`) commiteados en local. **Push pendiente**: `main` va por delante de `origin` (Fases 2–4). Antes del push: gitleaks sobre el historial y push con la cuenta `yeyess1`.
 - **Ojo:** el seed completo tarda ~36 min con TEI en CPU (~2,6 s por chunk). Re-ejecutarlo con `FORCE=1` repite esa espera. `/search` responde en ~0,3 s.
 - **Nota de entorno:** comandos Docker con `sg docker -c "..."` solo si la sesión arrancó antes de entrar al grupo `docker`. Sin `docker buildx`; `docker compose build` funciona. `frontend/.next/` y `node_modules/` quedan excluidos en `.gitleaks.toml`.
-- **Frontend (adelantado):** U-04 hecho (copia limpia + paleta morado tipo Odoo `#714B67`). Golden set (E-01) en redacción en `eval/golden/golden_set.yaml`.
+- **Frontend (adelantado):** U-04 hecho (copia limpia + paleta morado tipo Odoo `#714B67`).
 - **Fase 2 (Grafo agéntico):** hecha y verificada (2026-11-02, noche). Grafo LangGraph en `services/agent/src/agent/graph/` (`build_graph(deps, checkpointer)`), herramientas del foro en `agent/tools/`, eventos tipados en `common/schemas/events.py` + `agent/events.py` (`stream_events`). Diagrama exportado a `docs/graph.mmd` (`make graph`) y verificado contra §3.1. 88 tests; ruff, mypy y pre-commit en verde. Humo en vivo con Anthropic + TEI + Qdrant + Postgres: docs, direct, research y seguimiento con memoria en Postgres. V-k cerrada (ver §16 de ARCHITECTURE).
   - ✅ Hechas: S-01…S-07, R-01…R-07, X-01…X-04, A-06. Sin endpoint `/query` aún (Fase 3: A-01…A-05, SSE, `mode=linear`).
   - **Ojo:** `read_forum_post` necesita TLS 1.2 contra www.odoo.com desde la imagen `python:3.12-slim` (con TLS 1.3 + ALPN `http/1.1` el servidor no responde); ya está aplicado en `forum_ssl_context()`.
 - **Fase 3 (API + frontend v1):** hecha y verificada (2026-11-02, noche). `docker compose up` levanta los 7 servicios en healthy; UI en http://127.0.0.1:3000 (proxy `/api/agent/*`, `/api/ingestion/*`, `/api/health`). Agent: `POST /query`, `/query/stream` (SSE), `/query/resume` (HITL), `mode=linear` (E-02, `agent/linear.py`), Swagger en `:8000/docs` y `:8001/docs` (override de dev). Frontend: chat con SSE (U-10 adelantado), Markdown + resaltado, citas `[n]` → tarjetas, badge + timeline, panel de documentos, tipos generados (`make openapi`). 101 tests; gates Python, `npm run build` y `npm run lint` (0 errores) en verde.
-  - ✅ Hechas: A-01…A-05, E-02, U-01…U-03, U-05…U-10, U-13, C-02, C-03, C-06, O-C. 🔄 O-D (falta U-11). ⬜ U-12 (Fase 4), modo oscuro propio.
+  - ✅ Hechas: A-01…A-05, E-02, U-01…U-03, U-05…U-10, U-13, C-02, C-03, C-06, O-C. 🔄 O-D (falta U-11). ⬜ Modo oscuro propio (U-12 se cerró en la Fase 4).
   - **Ojo:** al cambiar esquemas de la API hay que correr `make openapi` (regenera `frontend/openapi/*.json` y `src/lib/api/*.gen.ts`) y reconstruir el frontend. `tsc --noEmit` en limpio necesita antes `npx next typegen` (helper `RouteContext`).
   - Capturas de la UI con respuesta real: en el scratchpad de la sesión (no versionadas).
-- **Siguiente paso:** Fase 4 (evaluación): `mode=linear` vs `agentic` en `/query` ya disponible para E-05; revisar el golden set (`eval/golden/`, borrador sin commitear).
+- **Fase 4 (Evaluación):** hecha (2026-11-03) con una salvedad: el juez quedó **incompleto**, porque el saldo de la API de Anthropic se agotó durante la corrida. Faltan 23 veredictos de 7 preguntas (q02, q05, q07, q12, q13, q16, q31); las 62 respuestas sí se completaron. `make eval` (profile `eval`) produce `eval/reports/*.json` y copia `dashboard.json` a `frontend/public/eval/latest.json` → `/analytics`. Resultados y análisis en `eval/README.md`. 128 tests; gates Python y frontend en verde.
+  - ✅ Hechas: E-01, E-03…E-07, E-09…E-13, V-04, U-12.
+  - Números: supervisor 30/31 (router 28/31); `/search` ES recall@10 0,64, MRR 0,82 (EN 0,64 / 0,86); pareado agéntico vs lineal F1 0,64 vs 0,63, faithfulness 0,97 vs 0,96; context precision 0,89 vs 0,68; HNSW recall@10 1,00 desde ef=32. Costo de la corrida 3,65 USD (agente 1,16, juez 2,49) + ~0,58 USD de desarrollo.
+  - **Ojo:** `init` ahora sincroniza `full_scan_threshold`/`indexing_threshold` (100 KB) en una colección existente (`update_collection`, sin tocar puntos). Ya está aplicado al stack local: 832/832 vectores indexados en HNSW.
+  - **Ojo:** `SourceRef.chunk_id` es nuevo (la eval lee el texto del contexto desde Qdrant); tipos TS regenerados con `make openapi`.
+- **Siguiente paso (al retomar, en este orden):**
+  1. Recargar saldo de la API de Anthropic.
+  2. Completar el juez: `make eval ARGS="--from-report /app/eval/reports/latest.json --no-hnsw"` (solo re-juzga los 23 veredictos que fallaron; no repite consultas; ~0,6 USD). Necesita `eval/reports/latest.json` local (no versionado; copia también en el scratchpad de la sesión del 2026-11-03).
+  3. Reconstruir el frontend (`docker compose up -d --build frontend`), revisar `/analytics` y actualizar números en `eval/README.md` y en esta sección.
+  4. Commit `[FIX] eval: complete judge verdicts` y push (ver **Commits**).
+  5. Después: Fase 6 (README raíz con las tablas de `eval/README.md`, ENT-02/ENT-06) o Fase 5 (retos: O-E → O-F → O-A; U-11 para cerrar O-D). Mejoras sugeridas por E-06: veredicto de suficiencia en el grader y umbral de delegación tras rewrite (q21); rewriter también con recall bajo (q15–q17).
 - **Entorno:** RTX 4060 Laptop de 8 GB, sin NVIDIA Container Toolkit (TEI en CPU por defecto; `make up-gpu` sin probar); 15 GB de RAM; uv 0.13.6, Compose 2.40, Node 22.
 
 ## Leyenda
@@ -113,7 +123,7 @@ Asistente agéntico de conocimiento para desarrolladores (RAG orquestado como gr
 | V-02 | OBL | Configurar índice eficiente (HNSW) y documentar parámetros (m, ef_construct, ef…) | ✅ Hecho | P0 | HNSW m=16, ef_construct=200, hnsw_ef=128 aplicados; umbrales 1000 KB. La medición va en V-04 |
 | V-03 | OBL | Filtrado por metadatos (p. ej. por documento) | ✅ Hecho | P0 | Payload indexes creados antes de ingestar (HNSW filtrable); filtro por `doc_id` verificado en Qdrant real (`/search` con `filters.doc_ids`) y en tests |
 | V-05 | OBL | Postgres: tabla `documents` (doc_id, nombre, fuente, content_hash, modelo de embeddings, n_chunks, estado, fechas) + migraciones | ✅ Hecho | P0 | D-08; base para I-06, O-F, O-D; `001_documents.sql` idempotente + `common.db.migrate`. Aplicada en Postgres 17 real: `documents` + 4 tablas `checkpoint*` |
-| V-04 | OBL | Medir recall@k de HNSW vs búsqueda exacta (`exact=true`) con preguntas de eval + latencia | ⬜ Por hacer | P1 | Evidencia empírica de parámetros D-05; forzar construcción HNSW (umbrales) |
+| V-04 | OBL | Medir recall@k de HNSW vs búsqueda exacta (`exact=true`) con preguntas de eval + latencia | ✅ Hecho | P1 | Evidencia de D-05. Hallazgo: con 1000 KB por segmento (8 segmentos de ~104 puntos) el HNSW no se construía (`indexed_vectors_count=0`): umbrales bajados a 100 KB y sincronizados por `init` en colecciones existentes (sin reindexar puntos). 62 consultas: recall@10 frente a exacto 0,98 con ef=10 y 1,00 desde ef=32; ~1,2 ms en ambos (`runners/hnsw_vs_exact.py`) |
 
 ## 4. Req. 2 — Supervisor
 
@@ -177,25 +187,25 @@ Asistente agéntico de conocimiento para desarrolladores (RAG orquestado como gr
 | U-09 | OBL | Panel de documentos: carga, listado, eliminación | ✅ Hecho | P0 | Fase v1; `components/documents/DocumentsPanel.tsx`: totales, filtro, badge de tipo, chunks, eliminar con confirmación |
 | U-10 | OPC | Cliente SSE (`fetch` + ReadableStream, máquina de estados de eventos) | ✅ Hecho | P1 | Fase v2, reto C; `lib/api/sse.ts` + reductor `applyEvent` en `ChatApp`: pasos en vivo y tokens del generator/direct/research; `final` = mismo `QueryResponse` que REST. Sin tarjeta HITL (U-11) |
 | U-11 | OPC | Tarjeta de confirmación HITL (aprobar/rechazar `interrupt`) | ⬜ Por hacer | P2 | Fase v2, reto D |
-| U-12 | OBL | Adaptar dashboard `/analytics`: resultados de eval (lineal vs agéntico, precisión supervisor, recall HNSW, ES vs EN), latencia/tokens/costo | ⬜ Por hacer | P1 | Fase v3; diferencial visual |
+| U-12 | OBL | Adaptar dashboard `/analytics`: resultados de eval (lineal vs agéntico, precisión supervisor, recall HNSW, ES vs EN), latencia/tokens/costo | ✅ Hecho | P1 | `/analytics` reescrito: lee `/eval/latest.json`; KPIs, lineal vs agéntico, matriz del supervisor, ES vs EN, HNSW, costo por nodo, tabla por pregunta (`components/analytics/`). Se borró el dashboard heredado (`components/Dashboard`, `lib/metricsApi.ts`) y con él los 4 warnings de lint. Series validadas con el checker de paleta (tokens `--chart-*`) |
 | U-13 | OBL | Dockerfile frontend con `output: "standalone"` | ✅ Hecho | P1 | C-01; `node:22.21.1-alpine3.22`, `deps → build → runtime`, cache mount de npm, uid 10001, solo `.next/standalone` + `static` + `public`; imagen 306 MB |
 
 ## 9. Req. 8 — Evaluación y justificación de lo agéntico
 
 | ID | Tipo | Tarea | Estado | Prioridad | Decisión / Contexto |
 |---|---|---|---|---|---|
-| E-01 | OBL | Golden set: ≥10 preguntas con respuesta esperada (cubiertas / no cubiertas / fuera de alcance) | ⬜ Por hacer | P0 | Único conjunto etiquetado (no hay entrenamiento; el corpus indexado no se etiqueta). Etiquetas por pregunta: respuesta esperada, secciones/chunks relevantes (para recall/precision de recuperación, V-04 y E-09), agente esperado (precisión del supervisor) |
+| E-01 | OBL | Golden set: ≥10 preguntas con respuesta esperada (cubiertas / no cubiertas / fuera de alcance) | ✅ Hecho | P0 | Golden set (31: 17/6/4/4, aceptado) + cargador y validación Pydantic en `eval/runners/golden.py` (agente por categoría, secciones `url#anchor`/`pdf#page=N`, hilos con turnos 1..n); tests en `eval/tests/test_golden.py` |
 | E-02 | OBL | Implementar RAG lineal baseline (recuperar → generar) | ✅ Hecho | P0 | `agent/linear.py`: mismos nodos `retriever` y `generator` (prompt, modelo, citas), sin memoria; `mode=linear` en `/query` → `nodes=[retriever, generator]` |
-| E-03 | OBL | Script de evaluación: faithfulness, answer relevancy, context precision | ⬜ Por hacer | P0 | D-12: módulo propio `eval/metrics/`; prompts del juez en `eval/prompts/` |
-| E-10 | OBL | Answer correctness (F1 de afirmaciones vs respuesta esperada, juez Opus 5.5) | ⬜ Por hacer | P1 | D-12 |
-| E-11 | OBL | Tests unitarios de métricas deterministas (context precision, recall@k, precision@k, MRR, routing accuracy) | ⬜ Por hacer | P1 | D-12; calidad de código |
-| E-13 | OBL | Profile Compose `eval`: runner de evaluación dentro de la red interna (acceso a agent y TEI no publicados) | ⬜ Por hacer | P1 | GAP 2 de ARCHITECTURE.md |
-| E-12 | OBL | Exportar resultados a JSON consumible por dashboard (U-12) + tabla en README | ⬜ Por hacer | P1 | D-12 |
-| E-04 | OBL | Métrica de precisión del supervisor al elegir agente | ⬜ Por hacer | P0 | |
-| E-05 | OBL | Comparación RAG lineal vs grafo agéntico (mismas preguntas), incl. latencia y tokens | ⬜ Por hacer | P0 | |
-| E-06 | OBL | Análisis de ≥2 casos donde el sistema falla | ⬜ Por hacer | P0 | |
-| E-07 | OBL | Sección «¿Por qué agéntico?» por agente/nodo: problema, ejemplo, costo | ⬜ Por hacer | P0 | |
-| E-09 | OBL | Experimento cross-lingual: recall@k y precision@k de recuperación con consulta original en español vs traducida a inglés (mismas preguntas de eval) | ⬜ Por hacer | P1 | Justifica empíricamente la capacidad de cambio de idioma del rewriter (R-07) |
+| E-03 | OBL | Script de evaluación: faithfulness, answer relevancy, context precision | ✅ Hecho | P0 | D-12: `eval/metrics/{faithfulness,relevancy,judge}.py` + `eval/prompts/`; contexto = chunks que llegan al generator (texto desde Qdrant por `chunk_id`). Pareado: faithfulness 0,97 vs 0,96, relevancy 0,66 vs 0,67; context precision 0,89 vs 0,68. Juez incompleto (saldo de la API agotado): faltan 23 veredictos de 7 preguntas, re-juzgables con `--from-report` |
+| E-10 | OBL | Answer correctness (F1 de afirmaciones vs respuesta esperada, juez Opus 5.5) | ✅ Hecho | P1 | D-12: `metrics/correctness.py` (TP/FP/FN → F1, más precision/recall) + veredicto de comportamiento para no cubiertas y fuera de alcance (`prompts/behaviour.md`). F1 pareado 0,64 vs 0,63 (n=14) |
+| E-11 | OBL | Tests unitarios de métricas deterministas (context precision, recall@k, precision@k, MRR, routing accuracy) | ✅ Hecho | P1 | `eval/tests/test_metrics.py` (context precision con el ejemplo de D-12, recall/precision@k, MRR, overlap HNSW, routing, citas, F1, cosenos, percentiles); 27 tests de eval |
+| E-13 | OBL | Profile Compose `eval`: runner de evaluación dentro de la red interna (acceso a agent y TEI no publicados) | ✅ Hecho | P1 | Servicio `eval` (profile `eval`, `eval/Dockerfile` multi-stage no-root, `additional_contexts`, UID del host para escribir en `./eval/reports`); `make eval` (con `ARGS=`) |
+| E-12 | OBL | Exportar resultados a JSON consumible por dashboard (U-12) + tabla en README | ✅ Hecho | P1 | `reports/<ts>.json` + `latest.json` + `latest.md` (tablas) + `dashboard.json` (copia ligera → `frontend/public/eval/latest.json`); tablas y análisis en `eval/README.md` |
+| E-04 | OBL | Métrica de precisión del supervisor al elegir agente | ✅ Hecho | P0 | `metrics/routing.py`: agente final 30/31 (0,97), decisión del router 28/31 (0,90); único error q21 (research → docs) |
+| E-05 | OBL | Comparación RAG lineal vs grafo agéntico (mismas preguntas), incl. latencia y tokens | ✅ Hecho | P0 | Mismas 31 preguntas vía `/query`: cubiertas, agéntico 0,018 vs 0,023 USD y 13,8 vs 9,6 s; fuera de alcance, 0,00017 vs 0,013 USD; generator 2.424 vs 5.280 tokens de entrada. Ver `eval/README.md` |
+| E-06 | OBL | Análisis de ≥2 casos donde el sistema falla | ✅ Hecho | P0 | 5 casos en `eval/README.md`: q21 sin delegar, router de no cubiertas, rewriter que no se activa en q15–q17, lineal sin memoria/router (q31, q24), limitación de faithfulness en seguimientos |
+| E-07 | OBL | Sección «¿Por qué agéntico?» por agente/nodo: problema, ejemplo, costo | ✅ Hecho | P0 | Tabla por nodo (problema, evidencia medida, costo) en `eval/README.md` |
+| E-09 | OBL | Experimento cross-lingual: recall@k y precision@k de recuperación con consulta original en español vs traducida a inglés (mismas preguntas de eval) | ✅ Hecho | P1 | 19 preguntas: recall@10 ES 0,64 = EN 0,64; MRR 0,82 vs 0,86. Qwen3 cross-lingual basta; la traducción no mejora el recall |
 | E-08 | OBL | Mini-benchmark de recuperación (recall@k, MRR) de embeddings sobre corpus propio: Qwen3 vs Harrier vs e5 | ❌ Descartado | P1 | Descartado por tiempo; Qwen3 adoptado sin comparación (ver ADR D-04) |
 
 ## 10. Req. 9 — Contenerización
@@ -580,6 +590,39 @@ Entradas cronológicas (más reciente arriba). Plantilla:
 - Próximos pasos:
 ```
 
+### 2026-11-03 — Fase 4: Evaluación
+- **Hecho:**
+  - Paquete `eval/` (D-12, sin Ragas): `metrics/` (retrieval, routing, citations, stats, judge, faithfulness, relevancy, correctness), `prompts/` (faithfulness, relevancy, correctness, behaviour), `runners/` (golden, client, crosslingual, hnsw_vs_exact, report, run_eval), `tests/` (27 tests: E-11 + golden). `pyyaml` añadido a `eval` (`uv.lock`).
+  - E-01: cargador Pydantic del golden set (31 ítems aceptados, sin editarlos): agente por categoría, referencias `url#anchor` (H1–H4) y `coding_guidelines.pdf#page=N` comparadas por (url, página), hilos con turnos 1..n.
+  - Runner: `/search` en ES y EN (E-09), HNSW vs exacto directo contra Qdrant con la consulta embebida una sola vez (V-04, latencia sin el embedding de TEI), `POST /query` en ambos modos (E-05) con los turnos de seguimiento en orden sobre el mismo `thread_id` y aprobación automática de interrupts HITL vía `/query/resume`, jueces Opus en paralelo (semáforo), evidencia por nodo (pregunta cruda vs `standalone_question`, consulta antes/después del rewriter), reporte JSON + tablas Markdown + copia ligera para el dashboard. `--from-report` reutiliza respuestas y veredictos y re-juzga solo los que fallaron.
+  - E-13: servicio `eval` (profile) con `eval/Dockerfile` (deps → build → runtime, no-root, fuentes en `/app/eval`), UID del host para escribir en el bind mount; `make eval` con `ARGS=`.
+  - Agent: `SourceRef`/`Source` llevan `chunk_id` (punto de Qdrant), para juzgar faithfulness sobre el texto exacto que vio el generator. OpenAPI y tipos TS regenerados.
+  - U-12: `/analytics` reescrito sobre el reporte (KPIs, gráfico de calidad lineal vs agéntico, tabla de costo/comportamiento, matriz de confusión, ES vs EN, curva recall–`hnsw_ef`, costo por nodo, detalle por pregunta). Sin hex en componentes: tokens `--chart-agentic`/`--chart-linear` validados (lightness, croma, CVD) con el checker de paleta; los gráficos hacen scroll propio en 390 px. Se borró el dashboard heredado y con él los 4 warnings de lint.
+  - `eval/README.md`: cómo se ejecuta, tablas, E-06 (5 casos) y E-07 (tabla por nodo).
+- **Resultados (corrida única completa, 2026-11-03, git `76b466c`, 31 preguntas × 2 modos):**
+  - Supervisor (E-04): agente final 30/31 (0,97); decisión inicial del router 28/31 (0,90): q21, q22 y q23 van a `docs`; q22 y q23 se recuperan por delegación, q21 no.
+  - Recuperación `/search` top 10 (19 preguntas): ES recall@1/5/10 = 0,25/0,54/0,64, precision@5 0,47, MRR 0,82, context precision@10 0,74. EN: 0,25/0,52/0,64, MRR 0,86, 0,79.
+  - Lineal vs agéntico (preguntas con documentación, n=21; juez en 17): faithfulness 0,97 vs 0,97, relevancy 0,68 vs 0,67, F1 0,65 vs 0,62. Pareado: F1 0,64 vs 0,63 (n=14), faithfulness 0,97 vs 0,96, relevancy 0,66 vs 0,67. Context precision 0,89 vs 0,68; context recall 0,60 vs 0,61; citas correctas 0,80 vs 0,60; chunks al generator 4,0 vs 10; tokens de entrada del generator 2.424 vs 5.280.
+  - Comportamiento (juez): no cubiertas 6/6 en ambos modos (el lineal dice «no está en la documentación»); fuera de alcance 4/4 agéntico vs 3/4 lineal (q24: el lineal responde el saludo con citas del changelog).
+  - Latencia p50/p95 (todas): 14,0/48,0 s agéntico vs 8,3/12,7 s lineal. Costo por pregunta 0,0169 vs 0,0206 USD; tokens medios 8.487/1.629 vs 5.032/1.054. Cubiertas: 0,018 vs 0,023 USD y 13,8 vs 9,6 s; fuera de alcance: 0,00017 vs 0,013 USD; no cubiertas: 36 s de media (62 s máx.).
+  - Costo por nodo (agéntico): generator 67 %, research_llm 28 %, grader 4 % (3,2 s por llamada), router 0,7 %.
+  - HNSW vs exacto (62 consultas ES+EN, 832/832 indexados): recall@10 0,982 (ef=10), 0,997 (16), 1,00 desde 32; p50 ~1,2 ms en todos los casos, igual que el exacto (1,21 ms).
+  - Costo: corrida completa 3,65 USD (agente 0,52 + 0,64; juez Opus 2,49 en 123 llamadas: faithfulness 1,32, correctness 0,65, relevancy 0,32, behaviour 0,20) + ~0,58 USD de desarrollo (4 preguntas). Precios de `common/pricing.py`. V-m: unos 0,05 USD de juez por respuesta.
+- **Problemas / hallazgos:**
+  - El HNSW **no estaba construido**: `indexed_vectors_count=0`. Los umbrales de 1000 KB aplican por segmento y Qdrant reparte 832 puntos en 8 segmentos de ~416 KB. Se bajaron a 100 KB y `ensure_collection` los sincroniza en colecciones existentes. Desviación de proceso: el cambio se aplicó al stack local como efecto lateral. El `docker compose run eval` levantó la cadena de dependencias y volvió a ejecutar `init` con la imagen nueva, después de que el clasificador de permisos bloqueara aplicarlo a mano. Los puntos no cambiaron (832) y el índice quedó en 832/832.
+  - Saldo de la API de Anthropic agotado durante el juicio: 23 veredictos sin obtener (q02, q05, q07, q12, q13, q16, q31). El reporte lo refleja (n por métrica) y se añadió la comparación pareada.
+  - El rewriter no se activa en las preguntas coloquiales (q15–q17): solo reescribe con cero chunks relevantes. En q21, la reescritura hizo que el grader aceptara chunks tangenciales y se perdió la delegación (E-06).
+  - La faithfulness penaliza en los seguimientos las afirmaciones que vienen del turno anterior: el juez no ve el historial.
+  - La animación de entrada de Recharts dejaba las barras vacías en capturas headless: se desactivó en los gráficos del dashboard.
+- **Decisiones y desviaciones:**
+  - Behaviour pass/fail (juez) para no cubiertas y fuera de alcance, en vez de F1 contra una `expected_answer` que describe un comportamiento (D-12 decía «abstención/delegación correcta»).
+  - Routing accuracy sobre el **agente final** (`answered_by`), que es lo que etiqueta `expected_agent`; la decisión del router se reporta aparte.
+  - Métricas de ranking (recall@k, MRR) vía `/search` con la pregunta del golden set, sin el turno 2 de los seguimientos (sin contexto no tiene sentido); para estos se mide pregunta cruda vs `standalone_question`.
+  - V-04 directo contra Qdrant (mismo `query_points` que `DenseRetriever`), porque la latencia de `/search` la domina el embedding en CPU (~0,3 s). Barrido de `hnsw_ef` 10–256.
+  - Dashboard: `frontend/public/eval/latest.json` es una copia ligera (`dashboard.json`, sin respuestas, pasos ni listas de afirmaciones) en vez del reporte completo (~800 KB).
+  - Tablas en `eval/README.md`; el README raíz (ENT-02/ENT-06) las incorporará en la Fase 6.
+- **Próximos pasos:** completar el juez con `--from-report` al recargar saldo; ENT-06 (llevar tablas y análisis al README raíz); mejoras derivadas de E-06 (grader de suficiencia, delegación con score bajo, rewriter que también actúe ante recall bajo). Commits sugeridos: agent (`chunk_id`) + common (umbrales); eval (métricas, jueces, runners, tests, Dockerfile, compose/Makefile); frontend (`/analytics`, tipos); backlog/docs.
+
 ### 2026-11-02 — Fase 3: API + frontend v1
 - **Hecho:**
   - API del agent (`api/routes_query.py`): `POST /query` agrega los eventos de `stream_events` en `QueryResponse` (ahora con `run_id`, `mode`, `external`, `usage` {input_tokens, output_tokens, cost_usd} e `interrupt`); `POST /query/stream` reenvía los eventos tipados como SSE (`event: <type>` + `data: <json>`); `POST /query/resume` reanuda un `interrupt` HITL (404 tipado si no hay). `main.py` con `create_app()` y lifespan que abre `postgres_checkpointer` (D-08), `build_deps`, el grafo agéntico y el lineal. Errores: 422 de validación, 502/504 con código estable (`classify_error`: `llm_unavailable`, `retrieval_unavailable`, `upstream_timeout`, `graph_failed`), `ErrorResponse` documentado en OpenAPI.
@@ -736,7 +779,7 @@ Entradas cronológicas (más reciente arriba). Plantilla:
 | ID | Riesgo / Pregunta | Mitigación / Respuesta | Estado |
 |---|---|---|---|
 | RK-01 | Evaluador sin GPU: embeddings 0.6B en CPU lentos en ingesta | `device=auto` + imagen CPU por defecto; GPU como override de Compose; documentar tiempos. Medido 2026-11-02: TEI CPU usa ~4 GB de RAM con `--max-batch-tokens 4096` (con 16384 hubo OOM); documentar ≥8 GB de RAM libres en el README | Abierto |
-| RK-02 | ~~Dataset debe ser documentación técnica pública en español~~ → Actualizado 2026-11-02: corpus técnico de Odoo 19 (sección Developer), casi todo en inglés | Recuperación cross-lingual si consultas en español (Qwen3 multilingüe la soporta); validar en eval | Abierto |
+| RK-02 | ~~Dataset debe ser documentación técnica pública en español~~ → Actualizado 2026-11-02: corpus técnico de Odoo 19 (sección Developer), casi todo en inglés | Recuperación cross-lingual si consultas en español (Qwen3 multilingüe la soporta); validar en eval. Medido 2026-11-03 (E-09): recall@10 ES = EN = 0,64 | Mitigado |
 | RK-03 | `robots.txt` de odoo.com prohíbe el buscador del foro (`Disallow: *?*search=*`) | No usar buscador interno; buscar vía motor externo con `site:` y leer posts individuales (permitidos) | Mitigado (D-07) |
 | RK-04 | `ddgs` (API no oficial) puede bloquear por rate limit durante demo | Caché, reintentos con backoff, estados explícitos; plan B SearXNG solo si el test falla | Abierto |
 | RK-05 | BM25 (reto B) no ayuda si consulta en español y corpus en inglés | Rewriter bilingüe (R-07) genera variante en inglés; impacto medido en E-09 | Abierto |

@@ -192,6 +192,7 @@ class Source(TypedDict):
     n: int; kind: Literal["doc", "external"]
     doc_id: str | None; title: str; section: str | None
     url: str; page: int | None; score: float | None; cited: bool
+    chunk_id: str | None   # punto de Qdrant; la eval lee el texto del contexto [2026-11-03]
 
 class GraphState(TypedDict):
     messages: Annotated[list[AnyMessage], add_messages]   # historial del thread (D-08)
@@ -350,7 +351,7 @@ El proxy se implementa con route handlers `app/api/[service]/[...path]/route.ts`
 | Vector `dense` | size 1024, `Cosine`, HNSW `m=16`, `ef_construct=200` |
 | Vector `sparse` | BM25, `modifier: idf`. Queda reservado vacío hasta el reto B |
 | Búsqueda | `hnsw_ef=128` por consulta (`QDRANT_HNSW_EF`); `exact=true` solo para V-04 |
-| Umbrales | `full_scan_threshold` / `indexing_threshold` se ajustan para forzar el HNSW (V-04; ver §16) |
+| Umbrales | `full_scan_threshold` = `indexing_threshold` = 100 KB (25 vectores de 1024 dims). Aplican **por segmento**: con 1000 KB, los 8 segmentos de ~104 puntos no construían el HNSW (V-04). `init` los sincroniza también en una colección existente (`update_collection`, sin reindexar puntos) **[2026-11-03]** |
 | Metadatos de colección | modelo de embeddings + dimensión (D-04) (ver §16) |
 
 | Payload index | Tipo |
@@ -589,17 +590,17 @@ Nota: con TEI, el `device=auto` de D-04 queda reemplazado por la imagen CPU o GP
 ├── frontend/
 │   ├── Dockerfile · .dockerignore · package.json · next.config.ts (output: "standalone")
 │   ├── src/app/{page.tsx,analytics/page.tsx,api/[service]/[...path]/route.ts,api/health/route.ts}
-│   ├── src/components/{chat,citations,steps,documents,hitl,analytics}/
+│   ├── src/components/{chat,documents,analytics}/   # hitl llega con U-11
 │   ├── src/lib/api/{types.gen.ts,client.ts,sse.ts}
-│   └── public/eval/latest.json         # copia del último reporte [Aprobado]
+│   └── public/eval/latest.json         # copia ligera del último reporte (dashboard.json) [Aprobado]
 ├── eval/
-│   ├── pyproject.toml · Dockerfile (profile eval) [Aprobado]
+│   ├── pyproject.toml · Dockerfile (profile eval) [Aprobado] · README.md (resultados, E-06, E-07)
 │   ├── golden/golden_set.yaml
-│   ├── metrics/{faithfulness,relevancy,correctness,retrieval,routing,citations}.py
-│   ├── prompts/{faithfulness,relevancy,correctness}.md
-│   ├── runners/{run_eval,hnsw_vs_exact,crosslingual}.py
-│   ├── reports/                         # JSON por corrida
-│   └── tests/test_metrics.py            # E-11
+│   ├── metrics/{faithfulness,relevancy,correctness,judge,retrieval,routing,citations,stats}.py
+│   ├── prompts/{faithfulness,relevancy,correctness,behaviour}.md
+│   ├── runners/{run_eval,golden,client,report,hnsw_vs_exact,crosslingual}.py
+│   ├── reports/                         # JSON por corrida + latest.{json,md} + dashboard.json (no versionados)
+│   └── tests/{test_metrics,test_golden}.py   # E-11, E-01
 ├── data/corpus/odoo19-dev/*.md · coding_guidelines.pdf
 ├── scripts/make_pdf.sh                  # [Aprobado]
 └── docs/ARCHITECTURE.md · docs/api/ (ejemplos curl / colección Bruno)
@@ -620,7 +621,7 @@ Nota: con TEI, el `device=auto` de D-04 queda reemplazado por la imagen CPU o GP
 | `postgres` | `postgres:<tag fijo>-alpine` | `pg_isready -U $POSTGRES_USER` | — | `pg-data:/var/lib/postgresql/data` | interna |
 | `searxng` | `searxng/searxng:<tag fijo>` | `GET /healthz` | — | `./infra/searxng:/etc/searxng:ro` | profile `searxng` |
 | `langfuse` | por decidir (D-10) | — | — | — | profile `observability` |
-| `eval` **[Aprobado 2026-11-02]** | build `./eval` + `common` | — | agent: `service_healthy` | `./eval/reports:/app/eval/reports` | profile `eval` |
+| `eval` **[Aprobado 2026-11-02]** | build `./eval` + `common` (no-root; corre con el UID del host, `EVAL_UID`/`EVAL_GID`) | — | agent: `service_healthy` | `./eval/reports:/app/eval/reports` | profile `eval` (`make eval ARGS=…`) |
 
 Reglas de build (C-01, C-07, D-10):
 - `# syntax=docker/dockerfile:1`, stages con nombre (`deps` → `runtime`) y `uv sync --frozen --no-dev` con cache mount y `uv.lock`/`pyproject.toml` montados por bind.
@@ -666,10 +667,12 @@ Golden set (`eval/golden/golden_set.yaml` **[Aprobado: YAML]**, unas 30 pregunta
 | Latencia / tokens / costo | por nodo y por consulta, desde `steps` y `usage` (o trazas, reto E) |
 
 - **Lineal vs agéntico (E-02, E-05):** mismas preguntas, `mode=linear` frente a `mode=agentic` en `/query`, con el mismo retriever y el mismo generator. En modo agéntico, context precision y faithfulness se miden sobre el contexto **post-grader** (los `sources` que llegan al generator); en lineal, sobre lo recuperado. Se reporta el delta por métrica junto con latencia, tokens y costo.
-- **Agregación:** por categoría y con `n`. Faithfulness y relevancy no aplican a `out_of_scope`, donde se mide si la abstención o la delegación fueron correctas.
-- **V-04 (HNSW vs exacto):** `/search` con `exact=false` frente a `exact=true` sobre las preguntas `covered`, midiendo recall@k del HNSW respecto al exacto y la latencia p50/p95. Requiere haber forzado la construcción del HNSW (§16).
+- **Agregación:** por categoría y con `n`. Faithfulness, relevancy y correctness se aplican a `covered` y `follow_up`. En `not_covered` y `out_of_scope`, el juez da un veredicto pasa/no pasa de **comportamiento** (`prompts/behaviour.md`: delegar o declarar que no está cubierto sin inventar; declinar fuera de alcance) **[2026-11-03]**. Las deltas entre modos se reportan también **pareadas** (solo preguntas juzgadas en ambos modos).
+- **Routing accuracy:** sobre el agente final (`answered_by`), que es lo que etiqueta `expected_agent`. La decisión inicial del router (`route`) se reporta aparte, porque una no cubierta puede ir a `docs` y llegar a research por delegación.
+- **Contexto juzgado:** el texto de los chunks de `sources` se lee de Qdrant por `chunk_id`. Los turnos ≥ 2 se juzgan con las preguntas previas del hilo; aun así, el juez no ve el historial de respuestas (limitación anotada en E-06).
+- **V-04 (HNSW vs exacto):** las 62 preguntas (ES y EN) se embeben una vez y se consultan directo en Qdrant (el mismo `query_points` que `DenseRetriever`/`/search`) con `exact=true` y con `hnsw_ef` ∈ {10, 16, 32, 64, 128, 256}: recall@k del HNSW respecto al exacto y latencia p50/p95 de la búsqueda sola, porque en `/search` la domina el embedding en CPU (~0,3 s). Requiere el HNSW construido (`indexed_vectors_count`, se reporta).
 - **E-09 (ES vs EN):** `/search` con `question` frente a `question_en` y recall@k / precision@k. Justifica R-07 y RK-05.
-- **Salida (E-12):** `eval/reports/<timestamp>.json` = `{run_meta: {models, settings, git_sha}, per_question: [...], aggregates: {linear, agentic}, routing: {confusion}, hnsw_vs_exact, crosslingual}`. Se copia a `frontend/public/eval/latest.json` y alimenta el dashboard U-12 **[Aprobado 2026-11-02]**, además de la tabla en el README.
+- **Salida (E-12):** `eval/reports/<timestamp>.json` = `{run_meta: {models, settings, git_sha, judge_usage}, aggregates: {agentic, linear}, comparison, routing, rewriter, retrieval, hnsw_vs_exact, node_evidence, per_node, costs, per_question}`, más `latest.md` (tablas del README) y `dashboard.json`, la copia ligera sin respuestas ni pasos que `make eval` deja en `frontend/public/eval/latest.json` para el dashboard U-12 **[2026-11-03]**. `--from-report` reutiliza respuestas y veredictos y re-juzga solo los que fallaron. Resultados en `eval/README.md`.
 - **Cualitativo:** ≥2 casos de falla (E-06) y la sección «¿Por qué agéntico?» por nodo, con problema, ejemplo y costo (E-07).
 
 ---
@@ -756,11 +759,11 @@ GAP de diseño (no viene de la prueba): el backlog no define cómo `make eval` a
 | ID | Riesgo / verificación | Origen | Acción |
 |---|---|---|---|
 | RK-01 | Evaluador sin GPU: ingesta lenta en CPU | D-04 | Imagen TEI CPU por defecto y `compose.gpu.yaml`. Documentar tiempos de `make seed`. |
-| RK-02 | Recuperación cross-lingual ES → EN | D-04, D-11 | Medir en E-09. Rewriter bilingüe (R-07). |
+| RK-02 | Recuperación cross-lingual ES → EN | D-04, D-11 | **[Medido 2026-11-03]** E-09: recall@10 ES = EN = 0,64, MRR 0,82 vs 0,86. Qwen3 basta. |
 | RK-03 | robots.txt prohíbe el buscador del foro | D-07 | Mitigado: `site:` + posts individuales. |
 | RK-04 | Rate limit de `ddgs` en la demo | D-07 | Caché, backoff y estados explícitos. Plan B SearXNG solo si falla. |
 | RK-05 | BM25 no sirve con una consulta en ES sobre un corpus en EN | D-05 | Variante EN del rewriter, medida en E-09. |
-| V-a | Nombre y default de `indexing_threshold` del optimizador, y valor de `full_scan_threshold`, para forzar el HNSW con unos 2.000–6.000 puntos | D-05 | Verificar en la doc de Qdrant con el tag fijado y definir los valores en `init` antes de V-04. |
+| V-a | Nombre y default de `indexing_threshold` del optimizador, y valor de `full_scan_threshold`, para forzar el HNSW con unos 2.000–6.000 puntos | D-05 | **[Resuelto 2026-11-03]** Ambos en KB y por segmento. Con 832 puntos en 8 segmentos, 1000 KB dejaba `indexed_vectors_count=0`; 100 KB construye el HNSW (832/832). `init` los sincroniza en colecciones existentes. |
 | V-b | Configuración de idioma (stemming/stopwords) de BM25. D-05/D-13 dicen «español», pero el corpus ahora está en inglés | D-05, D-13, D-11 | Verificar el parámetro. **[Aprobado]**: BM25 en inglés (idioma del corpus) y consulta EN desde el rewriter. |
 | V-c | ¿Agregar un vector con nombre a una colección existente obliga a recrearla? | D-05 | Se mitiga reservando `sparse` desde el día 1. Confirmar. |
 | V-d | Soporte de metadatos de colección en Qdrant para guardar modelo y dimensión | D-04 | Verificar. Si no existe, guardarlos en Postgres. |
@@ -772,7 +775,7 @@ GAP de diseño (no viene de la prueba): el backlog no define cómo `make eval` a
 | V-j | Tags de TEI (CPU y GPU Ada `89-*`) con soporte de Qwen3-Embedding | D-04, D-10 | Verificar y fijar los tags. |
 | V-k | `langchain-anthropic` con modelos 5.5: structured output sin forced `tool_choice` ni prefill, y parámetro `effort` | D-03 | **[Resuelto 2026-11-02]** `langchain-anthropic` 1.7.9 contra Haiku 5.5 y Sonnet 5.5: `with_structured_output(schema, method="json_schema", include_raw=True)` funciona en ambos (sin forced `tool_choice` ni prefill; el `raw` trae `usage_metadata`). Sonnet 5.5 **rechaza** `tool_choice` de tipo `tool`/`any` (HTTP 400), Haiku 5.5 lo acepta, por eso no se usa el método por defecto basado en forced tool calling. `effort="low"` se envía como `output_config.effort` y ambos modelos lo aceptan. `bind_tools(..., tool_choice="auto")` y `strict=True` funcionan en ambos. El streaming de tokens funciona (`astream` con `usage_metadata` agregado). |
 | V-l | Despliegue de Langfuse (profile «por decidir»: el self-host trae dependencias propias) | D-10 | Decidir al empezar O-E. |
-| V-m | Costo real del juez Opus (unas 30 preguntas × 2 modos) | D-12 | Medir en la primera corrida. |
+| V-m | Costo real del juez Opus (unas 30 preguntas × 2 modos) | D-12 | **[Resuelto 2026-11-03]** ~0,05 USD por respuesta juzgada: 2,49 USD en 123 llamadas (faithfulness 53 %). La corrida completa costó 3,65 USD con el agente. |
 | V-n | Copia del frontend base: excluir `.env`, `.git`, `.vercel` y toda marca BBVA | D-09 | Checklist en U-04 + gitleaks. |
 | V-o | `docker compose down -v` destruye el índice y la memoria | D-10 | Solo documentado. Nunca en el Makefile por defecto. |
 | V-p | Formato exacto de la instrucción de consulta de Qwen3 en TEI (si se aplica mal, degrada 1–5 %) | D-04 | **[Resuelto 2026-11-02]** `format_query` produce `Instruct: {task}\nQuery: {q}` y los documentos van sin instrucción (`test_embedder.py`). Verificado con `/search` real: consultas en español devuelven las secciones esperadas. |
