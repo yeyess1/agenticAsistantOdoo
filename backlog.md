@@ -8,7 +8,7 @@ Asistente agéntico de conocimiento para desarrolladores (RAG orquestado como gr
 > Actualizado 2026-11-02 (noche, tras la Fase 1). Leer esto primero al retomar una sesión nueva.
 
 - **Fase de decisiones:** cerrada (D-01…D-14). Diseño en `docs/ARCHITECTURE.md`, aprobado.
-- **Fase 0 (Fundación):** cerrada. Única abierta: F-07 (CI), necesita la URL del repo en GitHub.
+- **Fase 0 (Fundación):** cerrada, incluida F-07: CI en verde en GitHub. Repo: https://github.com/yeyess1/agenticAsistantOdoo (push con la cuenta gh `yeyess1`; la activa por defecto, `yeiCastordata`, no tiene permiso de push).
 - **Fase 1 (Ingesta + vector):** hecha y verificada con el stack real. `make up` levanta también `ingestion` (:8001) y `agent` (:8000, solo `/search` y `/health`), ambos en healthy. `make seed` indexó 59 archivos (58 MD + 1 PDF) = 832 puntos en Qdrant = 59 filas `indexed` en Postgres. Re-seed idempotente (59 unchanged, 6 s). ruff, mypy, pytest (60) y pre-commit en verde.
   - ✅ Hechas: I-01…I-12, V-01…V-03, A-07. ⬜ V-04 queda para la Fase 4.
 - **Cambios sin commitear:** todo el trabajo de las Fases 0 (fixes) y 1 está en el árbol de trabajo. Se borró `scripts/.gitkeep` (ya hay `make_pdf.sh`). El corpus (`data/corpus/odoo19-dev`, ~1,1 MB + PDF 1,3 MB) debe ir en un commit propio.
@@ -79,7 +79,7 @@ Asistente agéntico de conocimiento para desarrolladores (RAG orquestado como gr
 | F-04 | OBL | uv workspace (`pyproject.toml` raíz + miembros) + `uv.lock` | ✅ Hecho | P0 | D-14; Workspace con 5 miembros + `uv.lock`; Python 3.12 |
 | F-05 | OBL | gitleaks en pre-commit y CI | ✅ Hecho | P0 | D-14; regla de no-secretos; Configurado (`.gitleaks.toml`, pre-commit, CI). `gitleaks dir` y `gitleaks git` (13 commits) sin hallazgos vía imagen `ghcr.io/gitleaks/gitleaks:v8.28.0`; hook de pre-commit en verde. Falso positivo `generic-api-key` en backlog.md («last-token pooling…») cubierto por allowlist de línea; config migrada a `[[allowlists]]` |
 | F-06 | OBL | Makefile (`up`, `up-gpu`, `seed`, `eval`, `test`, `lint`, `down`) | ✅ Hecho | P1 | D-14; Makefile; `up` verificado con Docker (exit 0, todo healthy); `up-gpu` sin probar (falta NVIDIA Container Toolkit); `seed` y `eval` quedan activos en Fases 1 y 4 |
-| F-07 | OBL | GitHub Actions: lint, mypy, tests, gitleaks | 🔄 En curso | P2 | D-14; `.github/workflows/ci.yml` escrito (python, compose config, gitleaks). Pasos locales equivalentes en verde (ruff, mypy, pytest, compose config, gitleaks). Pendiente: primera corrida en GitHub (falta URL del repo) |
+| F-07 | OBL | GitHub Actions: lint, mypy, tests, gitleaks | ✅ Hecho | P2 | D-14; `.github/workflows/ci.yml` (python, compose config, gitleaks). Primera corrida en GitHub en verde (run 41562259480, 2026-11-02) sobre https://github.com/yeyess1/agenticAsistantOdoo |
 
 ## 2. Req. 1 — Servicio de ingesta
 
