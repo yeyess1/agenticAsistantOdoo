@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# ingestion: FastAPI (skeleton; app code arrives in Phase 1)
+# ingestion: FastAPI (parsers, chunker, indexing)
 # Build (see compose.yaml): context = ./services/ingestion; additional contexts:
 #   common    = ./packages/common   (shared library, COPY --from=common)
 #   workspace = .                   (uv.lock + pyproject files only, via bind mounts)
@@ -35,7 +35,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # --- runtime: venv only, non-root ------------------------------------------------------
 FROM ${PYTHON_IMAGE} AS runtime
 RUN groupadd --system --gid 10001 app \
- && useradd --system --uid 10001 --gid app --no-create-home --shell /usr/sbin/nologin app
+ && useradd --system --uid 10001 --gid app --no-create-home --shell /usr/sbin/nologin app \
+ && mkdir -p /data/documents && chown 10001:10001 /data/documents
 COPY --from=build /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \

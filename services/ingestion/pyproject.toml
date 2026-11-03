@@ -1,13 +1,18 @@
 [project]
 name = "odoo-rag-ingestion"
 version = "0.1.0"
-description = "Ingestion service (FastAPI). Skeleton: implemented in Phase 1."
+description = "Ingestion service (FastAPI): parsers, chunker, scraper, indexing."
 requires-python = ">=3.12"
 dependencies = [
     "odoo-rag-common",
     "fastapi>=0.115",
     "uvicorn[standard]>=0.32",
     "python-multipart>=0.0.12",
+    "beautifulsoup4>=4.12",
+    "lxml>=5.3",
+    "pyyaml>=6.0",
+    "tokenizers>=0.21",
+    "pymupdf4llm>=0.0.17",
 ]
 
 [build-system]

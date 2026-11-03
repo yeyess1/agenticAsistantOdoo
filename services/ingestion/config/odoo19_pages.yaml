@@ -1,0 +1,71 @@
+# Curated page list for the Odoo 19 Developer corpus (D-11). Versioned so the snapshot is
+# reproducible. Paths are relative to `base_url`. Only /documentation/19.0/ pages.
+license: CC BY-SA 4.0
+license_url: https://creativecommons.org/licenses/by-sa/4.0/
+base_url: https://www.odoo.com/documentation/19.0/
+pages:
+  # Tutorial: Server framework 101 (15)
+  - developer/tutorials/server_framework_101/01_architecture.html
+  - developer/tutorials/server_framework_101/02_newapp.html
+  - developer/tutorials/server_framework_101/03_basicmodel.html
+  - developer/tutorials/server_framework_101/04_securityintro.html
+  - developer/tutorials/server_framework_101/05_firstui.html
+  - developer/tutorials/server_framework_101/06_basicviews.html
+  - developer/tutorials/server_framework_101/07_relations.html
+  - developer/tutorials/server_framework_101/08_compute_onchange.html
+  - developer/tutorials/server_framework_101/09_actions.html
+  - developer/tutorials/server_framework_101/10_constraints.html
+  - developer/tutorials/server_framework_101/11_sprinkles.html
+  - developer/tutorials/server_framework_101/12_inheritance.html
+  - developer/tutorials/server_framework_101/13_other_module.html
+  - developer/tutorials/server_framework_101/14_qwebintro.html
+  - developer/tutorials/server_framework_101/15_final_word.html
+  # Reference: backend (11)
+  - developer/reference/backend/orm.html
+  - developer/reference/backend/orm/changelog.html
+  - developer/reference/backend/data.html
+  - developer/reference/backend/actions.html
+  - developer/reference/backend/reports.html
+  - developer/reference/backend/module.html
+  - developer/reference/backend/security.html
+  - developer/reference/backend/performance.html
+  - developer/reference/backend/testing.html
+  - developer/reference/backend/http.html
+  - developer/reference/backend/mixins.html
+  # Reference: frontend (11)
+  - developer/reference/frontend/framework_overview.html
+  - developer/reference/frontend/assets.html
+  - developer/reference/frontend/javascript_modules.html
+  - developer/reference/frontend/owl_components.html
+  - developer/reference/frontend/registries.html
+  - developer/reference/frontend/services.html
+  - developer/reference/frontend/hooks.html
+  - developer/reference/frontend/patching_code.html
+  - developer/reference/frontend/error_handling.html
+  - developer/reference/frontend/javascript_reference.html
+  - developer/reference/frontend/qweb.html
+  # Reference: user interface (4)
+  - developer/reference/user_interface/view_records.html
+  - developer/reference/user_interface/view_architectures.html
+  - developer/reference/user_interface/scss_inheritance.html
+  - developer/reference/user_interface/icons.html
+  # How-tos (7)
+  - developer/howtos/javascript_field.html
+  - developer/howtos/javascript_view.html
+  - developer/howtos/javascript_client_action.html
+  - developer/howtos/standalone_owl_application.html
+  - developer/howtos/company.html
+  - developer/howtos/create_reports.html
+  - developer/howtos/translations.html
+  # Tutorials (5)
+  - developer/tutorials/define_module_data.html
+  - developer/tutorials/restrict_data_access.html
+  - developer/tutorials/unit_tests.html
+  - developer/tutorials/mixins.html
+  - developer/tutorials/pdf_reports.html
+  # CLI, external API, upgrades (5)
+  - developer/reference/cli.html
+  - developer/reference/external_api.html
+  - developer/reference/external_rpc_api.html
+  - developer/reference/upgrades/upgrade_scripts.html
+  - developer/reference/upgrades/upgrade_utils.html
