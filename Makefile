@@ -2,7 +2,7 @@
 COMPOSE      ?= docker compose
 COMPOSE_GPU  ?= docker compose -f compose.yaml -f compose.override.yaml -f compose.gpu.yaml
 
-.PHONY: help env up up-gpu seed eval test lint graph openapi fmt watch down logs ps
+.PHONY: help env up up-gpu seed insights-backfill eval test lint graph openapi fmt watch down logs ps
 
 help: ## List targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-8s %s\n", $$1, $$2}'
@@ -20,6 +20,9 @@ up-gpu: env ## Same as `up` with TEI on GPU (NVIDIA Container Toolkit required)
 
 seed: ## Ingest the corpus snapshot through POST /documents (FORCE=1 reindexes unchanged docs)
 	$(COMPOSE) exec ingestion python -m ingestion.seed /data/corpus/odoo19-dev $(if $(FORCE),--force)
+
+insights-backfill: ## Fill query_log (insights view) from the existing LangGraph checkpoints; idempotent
+	$(COMPOSE) exec agent python -m agent.insights.backfill $(ARGS)
 
 eval: ## Run the evaluation (`eval` profile, E-13); ARGS="--only q01,q28" to select items
 	GIT_SHA=$$(git rev-parse --short HEAD 2>/dev/null || echo unknown) EVAL_UID=$$(id -u) EVAL_GID=$$(id -g) \

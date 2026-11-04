@@ -1,7 +1,8 @@
 """Agent service (FastAPI): ARCHITECTURE §5.1.
 
 `/query` (REST, aggregated events), `/query/stream` (SSE), `/query/resume` (HITL),
-`/search` (pure retrieval, A-07) and `/health`. Swagger at `/docs`.
+`/search` (pure retrieval, A-07), `/insights` (NLP over query_log) and `/health`.
+Swagger at `/docs`.
 """
 
 from __future__ import annotations
@@ -15,10 +16,11 @@ from common.settings import get_settings
 from fastapi import FastAPI
 from qdrant_client import AsyncQdrantClient
 
-from agent.api import routes_health, routes_query, routes_search
+from agent.api import routes_health, routes_insights, routes_query, routes_search
 from agent.factory import build_deps
 from agent.graph.checkpointer import postgres_checkpointer
 from agent.graph.supervisor import build_graph
+from agent.insights.repo import QueryLogRepo
 from agent.linear import build_linear_graph
 
 
@@ -38,6 +40,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         app.state.qdrant = qdrant
         app.state.graph = build_graph(deps, saver)
         app.state.linear_graph = build_linear_graph(deps)
+        app.state.query_log = QueryLogRepo(settings.resolved_database_url)
         yield
 
 
@@ -54,6 +57,7 @@ def create_app(*, with_lifespan: bool = True) -> FastAPI:
     )
     app.include_router(routes_query.router)
     app.include_router(routes_search.router)
+    app.include_router(routes_insights.router)
     app.include_router(routes_health.router)
     return app
 

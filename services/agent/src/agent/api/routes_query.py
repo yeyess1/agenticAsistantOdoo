@@ -19,6 +19,7 @@ from fastapi.responses import StreamingResponse
 from langgraph.graph.state import CompiledStateGraph
 
 from agent.events import build_response, stream_events
+from agent.insights.hook import logged
 
 router = APIRouter(tags=["query"])
 
@@ -46,15 +47,20 @@ def _graph(request: Request, linear: bool = False) -> CompiledStateGraph:  # typ
     return graph
 
 
+def _logged(
+    request: Request,
+    graph: CompiledStateGraph,  # type: ignore[type-arg]
+    events: AsyncIterator[Event],
+    question: str | None,
+) -> AsyncIterator[Event]:
+    """Every answered turn lands in `query_log` (insights view)."""
+    return logged(events, getattr(request.app.state, "query_log", None), graph, question)
+
+
 def _events(request: Request, body: QueryRequest, thread_id: str) -> AsyncIterator[Event]:
-    linear = body.mode == "linear"
-    return stream_events(
-        _graph(request, linear),
-        body.question,
-        thread_id,
-        filters=body.filters,
-        mode=body.mode,
-    )
+    graph = _graph(request, body.mode == "linear")
+    events = stream_events(graph, body.question, thread_id, filters=body.filters, mode=body.mode)
+    return _logged(request, graph, events, body.question)
 
 
 async def _aggregate(
@@ -136,4 +142,5 @@ async def query_resume(request: Request, body: ResumeRequest) -> QueryResponse:
     if not snapshot.interrupts:
         raise api_error(404, "no_pending_interrupt", f"thread {body.thread_id} is not paused")
     events = stream_events(graph, None, body.thread_id, resume={"approved": body.approved})
+    events = _logged(request, graph, events, None)
     return await _aggregate(graph, events, body.thread_id)
