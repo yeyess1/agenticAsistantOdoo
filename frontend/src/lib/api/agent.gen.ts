@@ -72,6 +72,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/insights": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Usage insights from query_log: phrases, topics, documents, answer length */
+        get: operations["insights_insights_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -93,6 +110,29 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** DayCount */
+        DayCount: {
+            /**
+             * Day
+             * Format: date
+             */
+            day: string;
+            /** Count */
+            count: number;
+        };
+        /** DocumentStat */
+        DocumentStat: {
+            /** Title */
+            title: string;
+            /** Url */
+            url: string;
+            /** Topic */
+            topic: string | null;
+            /** Retrieved */
+            retrieved: number;
+            /** Cited */
+            cited: number;
+        };
         /** ErrorDetail */
         ErrorDetail: {
             error: components["schemas"]["ErrorInfo"];
@@ -116,6 +156,58 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** InsightsResponse */
+        InsightsResponse: {
+            totals: components["schemas"]["InsightsTotals"];
+            /** Terms */
+            terms: components["schemas"]["PhraseCount"][];
+            /** Bigrams */
+            bigrams: components["schemas"]["PhraseCount"][];
+            /** Trigrams */
+            trigrams: components["schemas"]["PhraseCount"][];
+            /** Questions */
+            questions: components["schemas"]["QuestionCount"][];
+            /** Topics */
+            topics: components["schemas"]["TopicStat"][];
+            /** Documents */
+            documents: components["schemas"]["DocumentStat"][];
+            /** Answer Tokens Hist */
+            answer_tokens_hist: components["schemas"]["TokenBin"][];
+            /** Daily */
+            daily: components["schemas"]["DayCount"][];
+        };
+        /** InsightsTotals */
+        InsightsTotals: {
+            /** Turns */
+            turns: number;
+            /** First At */
+            first_at: string | null;
+            /** Last At */
+            last_at: string | null;
+            /** Answer Tokens Mean */
+            answer_tokens_mean: number | null;
+            /** Answer Tokens P50 */
+            answer_tokens_p50: number | null;
+            /** Answer Chars Mean */
+            answer_chars_mean: number | null;
+            /** Latency Ms P50 */
+            latency_ms_p50: number | null;
+            /**
+             * Cost Usd Total
+             * @default 0
+             */
+            cost_usd_total: number;
+            /** No Context Rate */
+            no_context_rate: number | null;
+            /** By Agent */
+            by_agent: {
+                [key: string]: number;
+            };
+            /** By Origin */
+            by_origin: {
+                [key: string]: number;
+            };
+        };
         /** PendingInterrupt */
         PendingInterrupt: {
             /**
@@ -128,6 +220,13 @@ export interface components {
             payload?: {
                 [key: string]: unknown;
             };
+        };
+        /** PhraseCount */
+        PhraseCount: {
+            /** Text */
+            text: string;
+            /** Count */
+            count: number;
         };
         /**
          * QueryRequest
@@ -215,6 +314,15 @@ export interface components {
             latency_ms: number;
             /** @description Set when the turn paused waiting for `/query/resume` (HITL). */
             interrupt: components["schemas"]["PendingInterrupt"] | null;
+        };
+        /** QuestionCount */
+        QuestionCount: {
+            /** Question */
+            question: string;
+            /** Count */
+            count: number;
+            /** Topic */
+            topic: string;
         };
         /**
          * ResumeRequest
@@ -363,6 +471,28 @@ export interface components {
             detail: {
                 [key: string]: unknown;
             };
+        };
+        /** TokenBin */
+        TokenBin: {
+            /** Lo */
+            lo: number;
+            /** Hi */
+            hi: number;
+            /** Count */
+            count: number;
+        };
+        /** TopicStat */
+        TopicStat: {
+            /** Topic */
+            topic: string;
+            /** Label */
+            label: string;
+            /** Count */
+            count: number;
+            /** Share */
+            share: number;
+            /** Answer Tokens Mean */
+            answer_tokens_mean: number | null;
         };
         /** Usage */
         Usage: {
@@ -577,6 +707,52 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    insights_insights_get: {
+        parameters: {
+            query?: {
+                /** @description Null: both. */
+                origin?: ("ui" | "eval") | null;
+                /** @description Null: agentic and linear. */
+                mode?: ("agentic" | "linear") | null;
+                /** @description Last N days only. */
+                days?: number | null;
+                top?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InsightsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description query_log not available */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };

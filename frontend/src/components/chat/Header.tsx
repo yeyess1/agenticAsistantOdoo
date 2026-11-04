@@ -19,7 +19,7 @@ export function AppMark() {
   );
 }
 
-export function MainNav({ current }: { current: "chat" | "analytics" }) {
+export function MainNav({ current }: { current: "chat" | "analytics" | "insights" }) {
   const item = (href: string, label: string, active: boolean) => (
     <Link
       href={href}
@@ -33,6 +33,7 @@ export function MainNav({ current }: { current: "chat" | "analytics" }) {
     <nav aria-label="Principal" className="flex items-center gap-1">
       {item("/", "Chat", current === "chat")}
       {item("/analytics", "Analytics", current === "analytics")}
+      {item("/insights", "Insights", current === "insights")}
     </nav>
   );
 }

@@ -13,6 +13,7 @@ export type QueryResponse = AgentSchemas["QueryResponse"];
 export type SourceRef = AgentSchemas["SourceRef"];
 export type StepRecord = AgentSchemas["StepRecord"];
 export type Mode = NonNullable<QueryRequest["mode"]>;
+export type InsightsResponse = AgentSchemas["InsightsResponse"];
 export type DocumentOut = IngestionSchemas["DocumentOut"];
 export type DocumentList = IngestionSchemas["DocumentList"];
 export type IngestResult = IngestionSchemas["IngestResult"];
@@ -65,6 +66,15 @@ export function query(body: QueryRequest, signal?: AbortSignal): Promise<QueryRe
     body: JSON.stringify(body),
     signal,
   });
+}
+
+export type InsightsFilters = { origin?: "ui" | "eval"; mode?: Mode; days?: number };
+
+export function getInsights(filters: InsightsFilters = {}, signal?: AbortSignal): Promise<InsightsResponse> {
+  const params = new URLSearchParams();
+  for (const [k, v] of Object.entries(filters)) if (v !== undefined) params.set(k, String(v));
+  const qs = params.toString();
+  return request<InsightsResponse>(`${AGENT}/insights${qs ? `?${qs}` : ""}`, { cache: "no-store", signal });
 }
 
 export function listDocuments(): Promise<DocumentList> {

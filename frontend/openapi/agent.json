@@ -220,6 +220,125 @@
         }
       }
     },
+    "/insights": {
+      "get": {
+        "tags": [
+          "insights"
+        ],
+        "summary": "Usage insights from query_log: phrases, topics, documents, answer length",
+        "operationId": "insights_insights_get",
+        "parameters": [
+          {
+            "name": "origin",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "ui",
+                    "eval"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Null: both.",
+              "title": "Origin"
+            },
+            "description": "Null: both."
+          },
+          {
+            "name": "mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "agentic",
+                    "linear"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Null: agentic and linear.",
+              "title": "Mode"
+            },
+            "description": "Null: agentic and linear."
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 3650,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Last N days only.",
+              "title": "Days"
+            },
+            "description": "Last N days only."
+          },
+          {
+            "name": "top",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 15,
+              "title": "Top"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsightsResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "query_log not available",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -246,6 +365,65 @@
   },
   "components": {
     "schemas": {
+      "DayCount": {
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "day",
+          "count"
+        ],
+        "title": "DayCount"
+      },
+      "DocumentStat": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "topic": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Topic"
+          },
+          "retrieved": {
+            "type": "integer",
+            "title": "Retrieved"
+          },
+          "cited": {
+            "type": "integer",
+            "title": "Cited"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "url",
+          "topic",
+          "retrieved",
+          "cited"
+        ],
+        "title": "DocumentStat"
+      },
       "ErrorDetail": {
         "properties": {
           "error": {
@@ -302,6 +480,203 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "InsightsResponse": {
+        "properties": {
+          "totals": {
+            "$ref": "#/components/schemas/InsightsTotals"
+          },
+          "terms": {
+            "items": {
+              "$ref": "#/components/schemas/PhraseCount"
+            },
+            "type": "array",
+            "title": "Terms"
+          },
+          "bigrams": {
+            "items": {
+              "$ref": "#/components/schemas/PhraseCount"
+            },
+            "type": "array",
+            "title": "Bigrams"
+          },
+          "trigrams": {
+            "items": {
+              "$ref": "#/components/schemas/PhraseCount"
+            },
+            "type": "array",
+            "title": "Trigrams"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/QuestionCount"
+            },
+            "type": "array",
+            "title": "Questions"
+          },
+          "topics": {
+            "items": {
+              "$ref": "#/components/schemas/TopicStat"
+            },
+            "type": "array",
+            "title": "Topics"
+          },
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentStat"
+            },
+            "type": "array",
+            "title": "Documents"
+          },
+          "answer_tokens_hist": {
+            "items": {
+              "$ref": "#/components/schemas/TokenBin"
+            },
+            "type": "array",
+            "title": "Answer Tokens Hist"
+          },
+          "daily": {
+            "items": {
+              "$ref": "#/components/schemas/DayCount"
+            },
+            "type": "array",
+            "title": "Daily"
+          }
+        },
+        "type": "object",
+        "required": [
+          "totals",
+          "terms",
+          "bigrams",
+          "trigrams",
+          "questions",
+          "topics",
+          "documents",
+          "answer_tokens_hist",
+          "daily"
+        ],
+        "title": "InsightsResponse"
+      },
+      "InsightsTotals": {
+        "properties": {
+          "turns": {
+            "type": "integer",
+            "title": "Turns"
+          },
+          "first_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First At"
+          },
+          "last_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last At"
+          },
+          "answer_tokens_mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer Tokens Mean"
+          },
+          "answer_tokens_p50": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer Tokens P50"
+          },
+          "answer_chars_mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer Chars Mean"
+          },
+          "latency_ms_p50": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency Ms P50"
+          },
+          "cost_usd_total": {
+            "type": "number",
+            "title": "Cost Usd Total",
+            "default": 0.0
+          },
+          "no_context_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "No Context Rate"
+          },
+          "by_agent": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Agent"
+          },
+          "by_origin": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Origin"
+          }
+        },
+        "type": "object",
+        "required": [
+          "turns",
+          "first_at",
+          "last_at",
+          "answer_tokens_mean",
+          "answer_tokens_p50",
+          "answer_chars_mean",
+          "latency_ms_p50",
+          "cost_usd_total",
+          "no_context_rate",
+          "by_agent",
+          "by_origin"
+        ],
+        "title": "InsightsTotals"
+      },
       "PendingInterrupt": {
         "properties": {
           "kind": {
@@ -318,6 +693,24 @@
         },
         "type": "object",
         "title": "PendingInterrupt"
+      },
+      "PhraseCount": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text",
+          "count"
+        ],
+        "title": "PhraseCount"
       },
       "QueryRequest": {
         "properties": {
@@ -513,6 +906,29 @@
         ],
         "title": "QueryResponse",
         "description": "Aggregated result of one turn (the REST body, closing event of the SSE stream)."
+      },
+      "QuestionCount": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "topic": {
+            "type": "string",
+            "title": "Topic"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question",
+          "count",
+          "topic"
+        ],
+        "title": "QuestionCount"
       },
       "ResumeRequest": {
         "properties": {
@@ -890,6 +1306,69 @@
         ],
         "title": "StepRecord",
         "description": "One executed node (timeline, U-08)."
+      },
+      "TokenBin": {
+        "properties": {
+          "lo": {
+            "type": "integer",
+            "title": "Lo"
+          },
+          "hi": {
+            "type": "integer",
+            "title": "Hi"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "lo",
+          "hi",
+          "count"
+        ],
+        "title": "TokenBin"
+      },
+      "TopicStat": {
+        "properties": {
+          "topic": {
+            "type": "string",
+            "title": "Topic"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "share": {
+            "type": "number",
+            "title": "Share"
+          },
+          "answer_tokens_mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer Tokens Mean"
+          }
+        },
+        "type": "object",
+        "required": [
+          "topic",
+          "label",
+          "count",
+          "share",
+          "answer_tokens_mean"
+        ],
+        "title": "TopicStat"
       },
       "Usage": {
         "properties": {
