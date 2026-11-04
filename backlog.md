@@ -238,11 +238,11 @@ Mejor uno bien hecho que varios a medias. Priorizar según D-01.
 | ID | Tipo | Tarea | Estado | Prioridad | Decisión / Contexto |
 |---|---|---|---|---|---|
 | ENT-01 | ENT | Repositorio GitHub con estructura clara e historial de commits | ⬜ Por hacer | P0 | |
-| ENT-02 | ENT | README: pasos para levantar localmente | ⬜ Por hacer | P0 | |
-| ENT-03 | ENT | README: documentación de API (curl/Bruno/Postman + Swagger) | ⬜ Por hacer | P0 | |
-| ENT-04 | ENT | README: diagrama de arquitectura y diagrama del grafo (Mermaid) | ⬜ Por hacer | P0 | |
-| ENT-05 | ENT | README: decisiones de arquitectura/stack, incluyendo lo descartado y por qué | ⬜ Por hacer | P0 | |
-| ENT-06 | ENT | README: «¿Por qué agéntico?», resultados de eval, ≥2 casos de falla | ⬜ Por hacer | P0 | |
+| ENT-02 | ENT | README: pasos para levantar localmente | ✅ Hecho | P0 | 2026-11-03: `README.md` §1–2 (requisitos, `.env` con Gemini o Anthropic, `make up`, `make seed`, verificación, URLs) y §6 (problemas frecuentes) |
+| ENT-03 | ENT | README: documentación de API (curl/Bruno/Postman + Swagger) | ✅ Hecho | P0 | 2026-11-03: `README.md` §3 (endpoints, cuerpos, respuestas, SSE, HITL, errores, curl) + `docs/api/odoo-rag.postman_collection.json` (15 peticiones con tests; carpeta de ingesta validada con newman 6.2.1) |
+| ENT-04 | ENT | README: diagrama de arquitectura y diagrama del grafo (Mermaid) | ✅ Hecho | P0 | 2026-11-03: arquitectura al estilo AWS (`scripts/diagrams/architecture.py`, íconos Simple Icons) y grafo con Archify (`docs/diagrams/src/agent-graph.json`, con citas al código). SVG claro y oscuro vía `<picture>`. El Mermaid de ARCHITECTURE.md y `make graph` quedan como referencia técnica |
+| ENT-05 | ENT | README: decisiones de arquitectura/stack, incluyendo lo descartado y por qué | ✅ Hecho | P0 | 2026-11-03: `README.md` «Stack y decisiones» (tabla D-01…D-14) + sección «Por qué Qwen3-Embedding-0.6B» con evidencia medida (E-09, V-04) |
+| ENT-06 | ENT | README: «¿Por qué agéntico?», resultados de eval, ≥2 casos de falla | ✅ Hecho | P0 | 2026-11-03: corrida completa con Gemini (git `a4f12e0`). Lectura honesta (el agente gana en routing, abstención, delegación y precisión de contexto, y pierde en F1 y recall) + fallas q08 (grader descarta contexto de una pregunta compuesta) y q31 (contextualize resuelve mal la correferencia) |
 | ENT-07 | ENT | Video demo ≤5 min: ingesta · consulta con citas · rewriter activo · caída a investigación · fuera de alcance | ⬜ Por hacer | P0 | |
 | ENT-08 | ENT | Preparar sesión técnica de 45 min (defensa de decisiones) | ⬜ Por hacer | P1 | |
 | ENT-09 | ENT | Auditoría final: sin secretos en historial, prueba en máquina limpia | ⬜ Por hacer | P0 | |

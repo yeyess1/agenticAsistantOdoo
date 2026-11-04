@@ -1,0 +1,642 @@
+{
+  "info": {
+    "name": "Odoo RAG",
+    "description": "Agentic RAG over the Odoo 19 developer documentation. Start the stack with `make up` (README). Run *Ingestion > Upload document* first to fill `doc_id`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "agent_url",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "ingestion_url",
+      "value": "http://localhost:8001"
+    },
+    {
+      "key": "thread_id",
+      "value": ""
+    },
+    {
+      "key": "doc_id",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Ingestion (:8001)",
+      "description": "Upload, list and delete documents. Swagger: http://localhost:8001/docs",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{ingestion_url}}/health",
+              "host": [
+                "{{ingestion_url}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Checks Qdrant, Postgres and the embeddings service."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Upload document",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{ingestion_url}}/documents",
+              "host": [
+                "{{ingestion_url}}"
+              ],
+              "path": [
+                "documents"
+              ]
+            },
+            "description": "Select a file in the `file` field. Saves the returned `doc_id` in the collection variable. `action` is `created`, `updated` or `unchanged` (same content hash, not reindexed unless `force=true`).",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": ".pdf, .md or .txt (max MAX_UPLOAD_MB, 20 MB by default)"
+                },
+                {
+                  "key": "source_url",
+                  "type": "text",
+                  "value": "",
+                  "description": "Optional canonical URL",
+                  "disabled": true
+                },
+                {
+                  "key": "force",
+                  "type": "text",
+                  "value": "false",
+                  "description": "Reindex even if the content is unchanged"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set(\"doc_id\", r.doc_id);",
+                  "pm.test(\"indexed\", () => pm.expect(r.status).to.eql(\"indexed\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List documents",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{ingestion_url}}/documents?limit=50&offset=0",
+              "host": [
+                "{{ingestion_url}}"
+              ],
+              "path": [
+                "documents"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                },
+                {
+                  "key": "status",
+                  "value": "indexed",
+                  "disabled": true,
+                  "description": "processing | indexed | failed"
+                }
+              ]
+            },
+            "description": "Returns `{items, total}`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get document",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{ingestion_url}}/documents/{{doc_id}}",
+              "host": [
+                "{{ingestion_url}}"
+              ],
+              "path": [
+                "documents",
+                "{{doc_id}}"
+              ]
+            },
+            "description": "Uses the `doc_id` saved by *Upload document*."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete document",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{ingestion_url}}/documents/{{doc_id}}",
+              "host": [
+                "{{ingestion_url}}"
+              ],
+              "path": [
+                "documents",
+                "{{doc_id}}"
+              ]
+            },
+            "description": "Deletes the Qdrant points and the registry row of the document."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Agent (:8000)",
+      "description": "Questions, streaming, HITL and retrieval. Swagger: http://localhost:8000/docs",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{agent_url}}/health",
+              "host": [
+                "{{agent_url}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Query - docs (agentic)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{agent_url}}/query",
+              "host": [
+                "{{agent_url}}"
+              ],
+              "path": [
+                "query"
+              ]
+            },
+            "description": "Supervisor -> docs agent. Saves `thread_id` so the next request is a follow-up in the same conversation.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"¿Cómo defino un campo computed almacenado en Odoo 19?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set(\"thread_id\", r.thread_id);",
+                  "pm.test(\"has answer\", () => pm.expect(r.answer).to.be.a(\"string\").and.not.empty);",
+                  "console.log(r.route, r.answered_by, r.usage);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Query - follow-up (memory)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{agent_url}}/query",
+              "host": [
+                "{{agent_url}}"
+              ],
+              "path": [
+                "query"
+              ]
+            },
+            "description": "Same `thread_id`: the contextualizer rewrites the question with the history (`standalone_question`).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"¿Y cómo hago que se pueda buscar?\",\n  \"thread_id\": \"{{thread_id}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set(\"thread_id\", r.thread_id);",
+                  "pm.test(\"has answer\", () => pm.expect(r.answer).to.be.a(\"string\").and.not.empty);",
+                  "console.log(r.route, r.answered_by, r.usage);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Query - forum research",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{agent_url}}/query",
+              "host": [
+                "{{agent_url}}"
+              ],
+              "path": [
+                "query"
+              ]
+            },
+            "description": "Routed to the research agent (Odoo Forum via ddgs). If `HITL_ENABLED=true` the response carries `interrupt`: approve it with *Resume*.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"En el foro de Odoo, ¿cómo se soluciona el error ValueError: Expected singleton?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set(\"thread_id\", r.thread_id);",
+                  "pm.test(\"has answer\", () => pm.expect(r.answer).to.be.a(\"string\").and.not.empty);",
+                  "console.log(r.route, r.answered_by, r.usage);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Query - out of scope",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{agent_url}}/query",
+              "host": [
+                "{{agent_url}}"
+              ],
+              "path": [
+                "query"
+              ]
+            },
+            "description": "Answered by `direct_answer` without retrieval.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"Hola, ¿me recomiendas una receta de pasta?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set(\"thread_id\", r.thread_id);",
+                  "pm.test(\"has answer\", () => pm.expect(r.answer).to.be.a(\"string\").and.not.empty);",
+                  "console.log(r.route, r.answered_by, r.usage);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Query - linear baseline",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{agent_url}}/query",
+              "host": [
+                "{{agent_url}}"
+              ],
+              "path": [
+                "query"
+              ]
+            },
+            "description": "retrieve -> generate, without router, grader or memory (evaluation baseline).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"¿Cómo defino un campo computed almacenado en Odoo 19?\",\n  \"mode\": \"linear\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set(\"thread_id\", r.thread_id);",
+                  "pm.test(\"has answer\", () => pm.expect(r.answer).to.be.a(\"string\").and.not.empty);",
+                  "console.log(r.route, r.answered_by, r.usage);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Query - filtered by document",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{agent_url}}/query",
+              "host": [
+                "{{agent_url}}"
+              ],
+              "path": [
+                "query"
+              ]
+            },
+            "description": "Restricts retrieval to the documents in `filters.doc_ids` (or `filters.sources`).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"¿Qué dice este documento sobre los nombres de variables?\",\n  \"filters\": {\n    \"doc_ids\": [\n      \"{{doc_id}}\"\n    ]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set(\"thread_id\", r.thread_id);",
+                  "pm.test(\"has answer\", () => pm.expect(r.answer).to.be.a(\"string\").and.not.empty);",
+                  "console.log(r.route, r.answered_by, r.usage);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Query - stream (SSE)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/event-stream"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{agent_url}}/query/stream",
+              "host": [
+                "{{agent_url}}"
+              ],
+              "path": [
+                "query",
+                "stream"
+              ]
+            },
+            "description": "Server-Sent Events: `node_started`, `node_finished`, `token`, `sources`, `interrupt`, `final`, `error`. Postman shows the events as they arrive.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"¿Qué hace el decorador @api.depends?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Resume (HITL)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{agent_url}}/query/resume",
+              "host": [
+                "{{agent_url}}"
+              ],
+              "path": [
+                "query",
+                "resume"
+              ]
+            },
+            "description": "Only with `HITL_ENABLED=true`: approves (`true`) or rejects (`false`) the pending external search of the thread.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"thread_id\": \"{{thread_id}}\",\n  \"approved\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set(\"thread_id\", r.thread_id);",
+                  "pm.test(\"has answer\", () => pm.expect(r.answer).to.be.a(\"string\").and.not.empty);",
+                  "console.log(r.route, r.answered_by, r.usage);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search chunks",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{agent_url}}/search",
+              "host": [
+                "{{agent_url}}"
+              ],
+              "path": [
+                "search"
+              ]
+            },
+            "description": "Retrieval only (no LLM). Optional: `filters`, `exact` (brute force), `hnsw_ef`, `with_instruction`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"computed field store\",\n  \"top_k\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

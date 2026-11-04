@@ -1,0 +1,455 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Odoo RAG: grafo agéntico (LangGraph)",
+    "locale": "es",
+    "output": "docs/diagrams/agent-graph.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/yeyess1/agenticAsistantOdoo.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "a4f12e00cbca0bab2033c3bab1dc7e47b8083edd"
+    }
+  },
+  "lanes": [
+    {
+      "id": "sup",
+      "label": "Supervisor"
+    },
+    {
+      "id": "docs",
+      "label": "Agente de documentación"
+    },
+    {
+      "id": "retry",
+      "label": "Reintento y delegación",
+      "variant": "exception"
+    },
+    {
+      "id": "res",
+      "label": "Agente de investigación"
+    }
+  ],
+  "groups": [
+    {
+      "id": "docs_subgraph",
+      "label": "docs_agent (subgrafo)",
+      "lane": "docs",
+      "fromCol": 2,
+      "toCol": 4,
+      "variant": "emphasis"
+    }
+  ],
+  "mainPath": [
+    "question",
+    "contextualize",
+    "router",
+    "retriever",
+    "grader",
+    "generator"
+  ],
+  "semanticChecks": {
+    "allowedTerminals": [
+      "generator",
+      "direct",
+      "finalize"
+    ]
+  },
+  "nodes": [
+    {
+      "id": "question",
+      "lane": "sup",
+      "col": 0,
+      "type": "external",
+      "icon": "start",
+      "label": "Pregunta",
+      "sublabel": "thread_id + historial",
+      "sources": [
+        {
+          "path": "services/agent/src/agent/graph/supervisor.py",
+          "line": 44,
+          "end_line": 44,
+          "label": "START"
+        }
+      ]
+    },
+    {
+      "id": "contextualize",
+      "lane": "sup",
+      "col": 1,
+      "type": "backend",
+      "label": "contextualize",
+      "sublabel": "pregunta autónoma",
+      "sources": [
+        {
+          "path": "services/agent/src/agent/graph/nodes/contextualize.py",
+          "line": 16,
+          "label": "make_contextualize"
+        }
+      ]
+    },
+    {
+      "id": "router",
+      "lane": "sup",
+      "col": 2,
+      "type": "backend",
+      "icon": "decision",
+      "label": "router",
+      "sublabel": "docs · research · direct",
+      "sources": [
+        {
+          "path": "services/agent/src/agent/graph/nodes/router.py",
+          "line": 14,
+          "end_line": 37,
+          "label": "decisión de ruta"
+        },
+        {
+          "path": "services/agent/src/agent/graph/supervisor.py",
+          "line": 46,
+          "end_line": 54,
+          "label": "aristas del router"
+        }
+      ]
+    },
+    {
+      "id": "direct",
+      "lane": "sup",
+      "col": 3,
+      "type": "backend",
+      "icon": "success",
+      "label": "direct_answer",
+      "sublabel": "saludo o fuera de alcance",
+      "tag": "→ respuesta",
+      "sources": [
+        {
+          "path": "services/agent/src/agent/graph/nodes/direct.py",
+          "line": 15,
+          "label": "make_direct"
+        },
+        {
+          "path": "services/agent/src/agent/graph/supervisor.py",
+          "line": 72,
+          "label": "→ END"
+        }
+      ]
+    },
+    {
+      "id": "retriever",
+      "lane": "docs",
+      "col": 2,
+      "type": "database",
+      "label": "retriever",
+      "sublabel": "TEI + Qdrant · top 10",
+      "sources": [
+        {
+          "path": "services/agent/src/agent/graph/nodes/retriever.py",
+          "line": 11,
+          "label": "make_retriever"
+        }
+      ]
+    },
+    {
+      "id": "grader",
+      "lane": "docs",
+      "col": 3,
+      "type": "backend",
+      "icon": "decision",
+      "label": "grader",
+      "sublabel": "relevancia por chunk",
+      "sources": [
+        {
+          "path": "services/agent/src/agent/graph/nodes/grader.py",
+          "line": 55,
+          "end_line": 63,
+          "label": "route_after_grader"
+        },
+        {
+          "path": "services/agent/src/agent/graph/docs_subgraph.py",
+          "line": 25,
+          "end_line": 29,
+          "label": "aristas del grader"
+        }
+      ]
+    },
+    {
+      "id": "generator",
+      "lane": "docs",
+      "col": 4,
+      "type": "backend",
+      "icon": "success",
+      "label": "generator",
+      "sublabel": "respuesta con citas [n]",
+      "tag": "→ respuesta",
+      "sources": [
+        {
+          "path": "services/agent/src/agent/graph/nodes/generator.py",
+          "line": 17,
+          "label": "make_generator"
+        },
+        {
+          "path": "services/agent/src/agent/graph/docs_subgraph.py",
+          "line": 31,
+          "label": "→ END"
+        }
+      ]
+    },
+    {
+      "id": "rewriter",
+      "lane": "retry",
+      "col": 3,
+      "type": "messagebus",
+      "label": "rewriter",
+      "sublabel": "reformula y traduce a EN",
+      "sources": [
+        {
+          "path": "services/agent/src/agent/graph/nodes/rewriter.py",
+          "line": 14,
+          "label": "make_rewriter"
+        },
+        {
+          "path": "services/agent/src/agent/graph/docs_subgraph.py",
+          "line": 30,
+          "label": "rewriter → retriever"
+        }
+      ]
+    },
+    {
+      "id": "nocontext",
+      "lane": "retry",
+      "col": 4,
+      "type": "security",
+      "icon": "failure",
+      "label": "no_context",
+      "sublabel": "sin contexto útil",
+      "sources": [
+        {
+          "path": "services/agent/src/agent/graph/nodes/generator.py",
+          "line": 58,
+          "label": "make_no_context"
+        },
+        {
+          "path": "services/agent/src/agent/graph/supervisor.py",
+          "line": 24,
+          "end_line": 26,
+          "label": "route_after_docs"
+        }
+      ]
+    },
+    {
+      "id": "confirm",
+      "lane": "retry",
+      "col": 5,
+      "type": "security",
+      "label": "confirm_external_search",
+      "sublabel": "interrupt() si HITL",
+      "sources": [
+        {
+          "path": "services/agent/src/agent/graph/nodes/confirm.py",
+          "line": 13,
+          "end_line": 31,
+          "label": "HITL + ruta"
+        }
+      ]
+    },
+    {
+      "id": "finalize",
+      "lane": "res",
+      "col": 4,
+      "type": "backend",
+      "icon": "success",
+      "label": "finalize_external",
+      "sublabel": "citas del foro",
+      "tag": "→ respuesta",
+      "sources": [
+        {
+          "path": "services/agent/src/agent/graph/nodes/research.py",
+          "line": 158,
+          "label": "make_finalize_external"
+        }
+      ]
+    },
+    {
+      "id": "researchllm",
+      "lane": "res",
+      "col": 5,
+      "type": "backend",
+      "yOffset": -80.0,
+      "label": "research_llm",
+      "sublabel": "LLM con tools",
+      "sources": [
+        {
+          "path": "services/agent/src/agent/graph/nodes/research.py",
+          "line": 31,
+          "end_line": 69,
+          "label": "make_research_llm"
+        }
+      ]
+    },
+    {
+      "id": "tools",
+      "lane": "res",
+      "col": 5,
+      "type": "cloud",
+      "yOffset": 80.0,
+      "label": "tools",
+      "sublabel": "buscar y leer en el foro",
+      "sources": [
+        {
+          "path": "services/agent/src/agent/graph/nodes/research.py",
+          "line": 95,
+          "label": "make_tools_node"
+        },
+        {
+          "path": "services/agent/src/agent/tools/forum.py",
+          "line": 114,
+          "end_line": 181,
+          "label": "tools del foro"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "q-ctx",
+      "from": "question",
+      "to": "contextualize"
+    },
+    {
+      "id": "ctx-router",
+      "from": "contextualize",
+      "to": "router"
+    },
+    {
+      "id": "router-docs",
+      "from": "router",
+      "to": "retriever",
+      "label": "docs",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "router-direct",
+      "from": "router",
+      "to": "direct",
+      "label": "direct"
+    },
+    {
+      "id": "router-research",
+      "from": "router",
+      "to": "confirm",
+      "label": "research",
+      "role": "branch",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "ret-grader",
+      "from": "retriever",
+      "to": "grader",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "grader-gen",
+      "from": "grader",
+      "to": "generator",
+      "label": "relevantes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "grader-rewrite",
+      "from": "grader",
+      "to": "rewriter",
+      "label": "ninguno",
+      "role": "error",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "rewrite-ret",
+      "from": "rewriter",
+      "to": "retriever",
+      "label": "reintenta",
+      "role": "return"
+    },
+    {
+      "id": "grader-nocontext",
+      "from": "grader",
+      "to": "nocontext",
+      "label": "MAX_REWRITES",
+      "role": "error",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "nocontext-confirm",
+      "from": "nocontext",
+      "to": "confirm",
+      "label": "delega"
+    },
+    {
+      "id": "confirm-research",
+      "from": "confirm",
+      "to": "researchllm",
+      "label": "aprobado"
+    },
+    {
+      "id": "research-tools",
+      "from": "researchllm",
+      "to": "tools",
+      "label": "tool calls",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "route": "straight"
+    },
+    {
+      "id": "research-finalize",
+      "from": "researchllm",
+      "to": "finalize",
+      "label": "listo",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "tools-research",
+      "from": "tools",
+      "to": "researchllm",
+      "label": "resultados",
+      "role": "return",
+      "fromSide": "right",
+      "toSide": "right",
+      "route": "outside-right",
+      "labelSegment": 1
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Supervisor",
+      "items": [
+        "contextualize reescribe la pregunta con el historial del thread (memoria en Postgres)",
+        "router elige docs, research o direct con salida estructurada"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Documentación",
+      "items": [
+        "grader evalúa todos los chunks en una sola llamada",
+        "rewriter reintenta hasta MAX_REWRITES = 2; después delega a investigación"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Investigación",
+      "items": [
+        "Con HITL_ENABLED=false confirm es pass-through; si se rechaza, responde direct_answer",
+        "tools devuelve los resultados a research_llm, hasta RESEARCH_MAX_ITERATIONS = 4 vueltas"
+      ]
+    }
+  ]
+}
