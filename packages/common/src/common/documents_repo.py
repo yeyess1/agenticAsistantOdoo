@@ -77,15 +77,17 @@ class DocumentsRepo:
                 (doc_id, name, source, mime_type, content_hash, embedding_model),
             )
 
-    async def mark_indexed(self, doc_id: UUID, n_chunks: int) -> None:
+    async def mark_indexed(self, doc_id: UUID, n_chunks: int) -> bool:
+        """False when the row no longer exists (the document was deleted mid-ingestion)."""
         async with await self._connect() as conn:
-            await conn.execute(
+            cur = await conn.execute(
                 """
                 UPDATE documents SET status = 'indexed', n_chunks = %s, error = NULL,
                   ingested_at = now(), updated_at = now() WHERE doc_id = %s
                 """,
                 (n_chunks, doc_id),
             )
+            return bool(cur.rowcount > 0)
 
     async def mark_failed(self, doc_id: UUID, error: str) -> None:
         async with await self._connect() as conn:

@@ -10,7 +10,7 @@ from common.schemas.documents import DocumentList, DocumentOut, DocumentStatus, 
 from fastapi import APIRouter, File, Form, HTTPException, Query, Request, UploadFile, status
 
 from ingestion.parsers import ParseError, UnsupportedTypeError
-from ingestion.pipeline import IngestionPipeline
+from ingestion.pipeline import DocumentDeletedError, IngestionPipeline
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 
@@ -28,7 +28,7 @@ def _error(code: int, kind: str, message: str) -> HTTPException:
     "",
     response_model=IngestResult,
     summary="Ingest a PDF, TXT or MD document",
-    responses={413: {}, 415: {}, 422: {}, 502: {}},
+    responses={409: {}, 413: {}, 415: {}, 422: {}, 502: {}},
 )
 async def upload_document(
     request: Request,
@@ -46,6 +46,8 @@ async def upload_document(
         return await _pipeline(request).ingest(
             data, filename, source_url=source_url or None, force=force
         )
+    except DocumentDeletedError as exc:
+        raise _error(409, "document_deleted_during_ingestion", str(exc)) from exc
     except UnsupportedTypeError as exc:
         raise _error(415, "unsupported_type", str(exc)) from exc
     except (ParseError, ValueError) as exc:

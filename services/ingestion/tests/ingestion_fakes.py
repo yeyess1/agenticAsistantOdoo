@@ -69,13 +69,17 @@ class FakeRepo:
             "ingested_at": old["ingested_at"] if old else None,
         }
 
-    async def mark_indexed(self, doc_id: UUID, n_chunks: int) -> None:
+    async def mark_indexed(self, doc_id: UUID, n_chunks: int) -> bool:
+        if doc_id not in self.rows:
+            return False
         self.rows[doc_id].update(
             status="indexed", n_chunks=n_chunks, ingested_at=datetime.now(UTC), error=None
         )
+        return True
 
     async def mark_failed(self, doc_id: UUID, error: str) -> None:
-        self.rows[doc_id].update(status="failed", error=error)
+        if doc_id in self.rows:
+            self.rows[doc_id].update(status="failed", error=error)
 
     async def delete(self, doc_id: UUID) -> bool:
         return self.rows.pop(doc_id, None) is not None

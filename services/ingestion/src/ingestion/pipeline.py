@@ -61,6 +61,10 @@ def build_payload(
     }
 
 
+class DocumentDeletedError(RuntimeError):
+    """The document was deleted while it was being ingested; its new points were rolled back."""
+
+
 class IngestionPipeline:
     def __init__(
         self,
@@ -148,7 +152,15 @@ class IngestionPipeline:
                 await self._qdrant.upsert(
                     self._s.qdrant_collection, points=points[i : i + UPSERT_BATCH], wait=True
                 )
-            await self._repo.mark_indexed(doc_id, len(chunks))
+            if not await self._repo.mark_indexed(doc_id, len(chunks)):
+                # A DELETE arrived while embedding: it removed the row (and the points that
+                # existed then). Without this rollback the points upserted above would stay
+                # in Qdrant with no registry row.
+                await self.delete_points(doc_id)
+                raise DocumentDeletedError(f"document {doc_id} was deleted during ingestion")
+        except DocumentDeletedError:
+            log.warning("ingestion of %s rolled back: deleted mid-ingestion", doc.source)
+            raise
         except Exception as exc:
             log.exception("ingestion failed for %s", doc.source)
             await self._repo.mark_failed(doc_id, f"{type(exc).__name__}: {exc}")
@@ -164,26 +176,37 @@ class IngestionPipeline:
             took_ms=_ms(started),
         )
 
+    @staticmethod
+    def _doc_filter(doc_id: UUID) -> models.Filter:
+        return models.Filter(
+            must=[models.FieldCondition(key="doc_id", match=models.MatchValue(value=str(doc_id)))]
+        )
+
     async def delete_points(self, doc_id: UUID) -> None:
         await self._qdrant.delete(
             self._s.qdrant_collection,
-            points_selector=models.FilterSelector(
-                filter=models.Filter(
-                    must=[
-                        models.FieldCondition(
-                            key="doc_id", match=models.MatchValue(value=str(doc_id))
-                        )
-                    ]
-                )
-            ),
+            points_selector=models.FilterSelector(filter=self._doc_filter(doc_id)),
             wait=True,
         )
 
     async def delete_document(self, doc_id: UUID) -> bool:
-        if await self._repo.get(doc_id) is None:
+        """Delete the registry row and every Qdrant point of the document.
+
+        Points are deleted even when the row is missing, so the same call also cleans up
+        orphans. Returns False only when there was neither a row nor points.
+        """
+        row = await self._repo.get(doc_id)
+        n_points = (
+            await self._qdrant.count(
+                self._s.qdrant_collection, count_filter=self._doc_filter(doc_id), exact=True
+            )
+        ).count
+        if row is None and n_points == 0:
             return False
         await self.delete_points(doc_id)
-        return await self._repo.delete(doc_id)
+        if row is not None:
+            await self._repo.delete(doc_id)
+        return True
 
 
 def _ms(started: float) -> int:

@@ -13,7 +13,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from ingestion.api import routes_documents, routes_health
 from ingestion.chunking.tokenizer import CharTokenCounter
-from ingestion.pipeline import IngestionPipeline
+from ingestion.pipeline import DocumentDeletedError, IngestionPipeline
 from ingestion_fakes import FakeEmbedder, FakeRepo
 from qdrant_client import AsyncQdrantClient
 
@@ -114,6 +114,32 @@ async def test_delete_removes_points_and_row(stack: dict[str, Any]) -> None:
     assert await count(stack["qdrant"]) == b.n_chunks
     assert await stack["repo"].get(a.doc_id) is None
     assert await stack["pipeline"].delete_document(a.doc_id) is False
+
+
+async def test_delete_during_ingestion_leaves_no_orphans(stack: dict[str, Any]) -> None:
+    """A DELETE that lands while the document is being embedded must not leave points behind."""
+    pipeline, doc_id = stack["pipeline"], doc_id_for("https://odoo.test/orm.html")
+    embed = stack["embedder"].embed_documents
+
+    async def embed_then_concurrent_delete(texts: Any) -> list[list[float]]:
+        vectors = await embed(texts)
+        assert await pipeline.delete_document(doc_id) is True  # the row exists (processing)
+        return vectors
+
+    stack["embedder"].embed_documents = embed_then_concurrent_delete
+    with pytest.raises(DocumentDeletedError):
+        await pipeline.ingest(WEB_DOC, "orm.md")
+    assert await count(stack["qdrant"]) == 0
+    assert await stack["repo"].get(doc_id) is None
+
+
+async def test_delete_cleans_up_orphan_points(stack: dict[str, Any]) -> None:
+    """Points without a registry row (left by an older bug) are removed by the same DELETE."""
+    res = await stack["pipeline"].ingest(WEB_DOC, "orm.md")
+    stack["repo"].rows.pop(res.doc_id)  # orphan the points
+    assert await stack["pipeline"].delete_document(res.doc_id) is True
+    assert await count(stack["qdrant"]) == 0
+    assert await stack["pipeline"].delete_document(res.doc_id) is False
 
 
 async def test_metadata_filter_by_doc_id(stack: dict[str, Any], settings: Settings) -> None:

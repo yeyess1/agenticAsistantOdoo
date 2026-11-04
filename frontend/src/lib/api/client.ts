@@ -127,6 +127,8 @@ export function errorMessage(err: unknown): string {
       return "No se pudo conectar con el servicio.";
     case "not_found":
       return "El documento ya no existe.";
+    case "document_deleted_during_ingestion":
+      return "El documento se eliminó mientras se indexaba; no quedó nada guardado. Súbelo de nuevo si lo necesitas.";
     default:
       return err.message || `Error ${err.status}`;
   }
