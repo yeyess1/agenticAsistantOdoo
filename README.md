@@ -30,10 +30,6 @@ Cada camino termina en un nodo que produce la respuesta (marcado `→ respuesta`
 - **docs:** RAG con citas `[n]`. Si el grader no encuentra chunks relevantes, el rewriter reformula la pregunta (y la traduce al inglés) hasta `MAX_REWRITES` veces. Después, el subgrafo **delega** al agente de investigación.
 - **research:** búsqueda en el foro de Odoo, con hasta `RESEARCH_MAX_ITERATIONS` vueltas por el bucle de tools.
 
-Con `HITL_ENABLED=true`, `confirm_external_search` pausa el grafo y espera la aprobación del usuario.
-
-El diagrama de arquitectura sigue las convenciones de AWS (grupos anidados, íconos de servicio, pasos numerados y un color por flujo) y se genera con `python scripts/diagrams/architecture.py`; los íconos son de [Simple Icons](https://simpleicons.org) (CC0). El grafo se generó con [Archify](https://github.com/tt-a1i/archify) a partir de [`docs/diagrams/src/agent-graph.json`](docs/diagrams/src/agent-graph.json) y cita el código fuente de cada nodo. Su versión interactiva, [`docs/diagrams/agent-graph.html`](docs/diagrams/agent-graph.html), tiene tema claro y oscuro, zoom y enlaces al código, y se abre localmente en el navegador. Para regenerar sus SVG y PNG: `node scripts/export_diagrams.mjs`.
-
 ### Stack y decisiones
 
 Resumen de las decisiones D-01 a D-14. El contexto, las alternativas y la evidencia completa están en [`backlog.md`](backlog.md) (sección *Decisiones*).
